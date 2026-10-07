@@ -8,7 +8,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)](#requirements)
 [![License: MIT](https://img.shields.io/badge/License-MIT-38bdf8)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/Kkthnx/NvidiaShaderCleanup?color=38bdf8)](https://github.com/Kkthnx/NvidiaShaderCleanup/releases/latest)
+[![Release](https://img.shields.io/github/v/release/Kkthnx/ShaderSweep?color=38bdf8)](https://github.com/Kkthnx/ShaderSweep/releases/latest)
 
 <img src="assets/shadersweep-done.png" alt="ShaderSweep after a clean, showing 9.82 GB freed" width="300" />
 <img src="assets/shadersweep-ready.png" alt="ShaderSweep in preview mode" width="300" />
@@ -35,7 +35,7 @@ ShaderSweep remembers which driver each GPU had the last time you cleaned. When 
 
 ## Download
 
-Grab `ShaderSweep-<version>.zip` or the single `.exe` from the [latest release](https://github.com/Kkthnx/NvidiaShaderCleanup/releases/latest), then run it. Windows asks for administrator rights because some caches belong to the system and driver service accounts.
+Grab `ShaderSweep-<version>.zip` or the single `.exe` from the [latest release](https://github.com/Kkthnx/ShaderSweep/releases/latest), then run it. Windows asks for administrator rights because some caches belong to the system and driver service accounts.
 
 The exe is not code signed yet, so Windows SmartScreen may warn you the first time. Each release lists a SHA-256 hash you can check. The source is all here, and CI builds it.
 

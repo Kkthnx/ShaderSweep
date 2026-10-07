@@ -75,7 +75,7 @@
 .NOTES
     Author : Kkthnx
     License: MIT
-    Project: https://github.com/Kkthnx/NvidiaShaderCleanup
+    Project: https://github.com/Kkthnx/ShaderSweep
     Requires: Windows 10 or 11, Windows PowerShell 5.1 or PowerShell 7+,
               administrator rights.
 #>
