@@ -68,6 +68,7 @@ export async function mockScan(): Promise<ScanResult> {
     isAdmin: true,
     disk: { drive: "C:", free: 214.3 * GB, total: 930.5 * GB },
     pendingRestart: mode === "pending" ? 6 : 0,
+    totalFreed: mode === "old" || mode === "changed" ? 31.2 * GB : 0,
     adapters: [{ vendor: "nvidia", name: "NVIDIA GeForce RTX 5070", version: "616.92", date: "2026-09-04" }],
     providers: providers(),
     lastCleanAt: mode === "old" || changed ? Math.round(Date.now() / 1000) - 19 * 86400 : null,
@@ -117,5 +118,6 @@ export async function mockClean(ids: string[], preview: boolean): Promise<CleanR
     queuedFiles: results.reduce((n, r) => n + r.queuedFiles, 0),
     queuedBytes: results.reduce((n, r) => n + r.queuedBytes, 0),
     failedFiles: 0,
+    report: "ShaderSweep 2.0.0\nClean on 2026-10-07 20:06 UTC",
   };
 }

@@ -29,3 +29,7 @@ export async function onProgress(handler: (p: Progress) => void): Promise<() => 
   if (inTauri) return listen<Progress>("clean-progress", (event) => handler(event.payload));
   return (await mock()).mockOnProgress(handler);
 }
+
+export async function reveal(path: string): Promise<void> {
+  if (inTauri) await invoke("reveal", { path });
+}

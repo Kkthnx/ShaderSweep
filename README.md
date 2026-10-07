@@ -81,7 +81,28 @@ Space freed is counted per file that was actually deleted, never taken from the 
 - **Preview only** shows what would be removed and deletes nothing.
 - **Remove driver held files at restart** can be turned off if you would rather leave them.
 
-**Copy report** on the result screen puts a plain text summary on your clipboard, handy for a bug report.
+**Copy report** on the result screen puts a plain text summary on your clipboard, handy for a bug report. The same text is saved to `%LOCALAPPDATA%\ShaderSweep\last-run.txt` after every real clean. Each cache row also expands to show its exact folders, with an **Open** button for each.
+
+---
+
+## Headless mode
+
+For chaining after a driver install or running from a scheduled task, start the exe with `--clean`. No window opens.
+
+```powershell
+.\ShaderSweep.exe --clean --preview
+.\ShaderSweep.exe --clean --only nvidia,windows
+.\ShaderSweep.exe --clean --installers --no-restart-queue
+```
+
+| Option | What it does |
+| --- | --- |
+| `--preview` | Measure only, delete nothing |
+| `--only a,b` | Only these rows: `nvidia`, `amd`, `intel`, `windows`, `steam`, `installers` |
+| `--installers` | Also clear driver installer leftovers |
+| `--no-restart-queue` | Do not queue driver held files for the next restart |
+
+Exit codes are `0` done, `1` some files were in use, `2` error. The result goes to `last-run.txt`, and is printed too when you run it from an elevated terminal.
 
 ---
 
@@ -111,7 +132,7 @@ cargo clippy --all-targets -- -D warnings
 cargo test
 ```
 
-Two tests are marked `ignored` because they write to the system's pending delete queue. Run them with `cargo test -- --ignored` when you want them.
+The suite includes full scan and clean runs against a made up machine in a temp folder, so deleting is tested without touching your real caches. Two tests are marked `ignored` because one writes to the system's pending delete queue and one prints a real scan. Run them with `cargo test -- --ignored` when you want them.
 
 ---
 

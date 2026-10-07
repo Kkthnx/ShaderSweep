@@ -120,7 +120,7 @@ pub const PROVIDERS: &[Provider] = &[
         note: Some(
             "A few index files are held by the display driver. Those are queued for your next restart.",
         ),
-        about: "Compiled shader binaries for your exact GPU and driver. The driver rebuilds them the next time a game needs them, so the first launch afterwards can be slower.",
+        about: "Compiled shader binaries for your exact GPU and driver. The driver rebuilds them the next time a game needs them, so the first launch afterwards can be slower. NVIDIA caps this cache at 16 GB by default. You can change the limit in the NVIDIA App under Graphics, Global Settings, Shader Cache Size.",
         resolve: nvidia,
     },
     Provider {

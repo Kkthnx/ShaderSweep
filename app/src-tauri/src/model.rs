@@ -56,6 +56,8 @@ pub struct ScanResult {
     pub providers: Vec<ProviderScan>,
     /// Seconds since the Unix epoch, or none if the caches were never cleaned.
     pub last_clean_at: Option<u64>,
+    /// Bytes freed by every real clean so far.
+    pub total_freed: u64,
     pub driver_changes: Vec<DriverChange>,
 }
 
@@ -82,6 +84,8 @@ pub struct CleanResult {
     pub queued_files: u32,
     pub queued_bytes: u64,
     pub failed_files: u32,
+    /// Plain text summary, ready to copy or save.
+    pub report: String,
 }
 
 #[derive(Debug, Clone, Serialize)]

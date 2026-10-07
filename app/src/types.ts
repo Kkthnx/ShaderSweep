@@ -40,6 +40,7 @@ export interface ScanResult {
   isAdmin: boolean;
   disk: DiskInfo | null;
   pendingRestart: number;
+  totalFreed: number;
   adapters: Adapter[];
   providers: ProviderScan[];
   lastCleanAt: number | null;
@@ -64,6 +65,7 @@ export interface CleanResult {
   queuedFiles: number;
   queuedBytes: number;
   failedFiles: number;
+  report: string;
 }
 
 export interface Progress {

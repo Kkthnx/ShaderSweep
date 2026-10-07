@@ -1,5 +1,5 @@
 import "./styles.css";
-import { clean, onProgress, scan } from "./bridge";
+import { clean, onProgress, reveal, scan } from "./bridge";
 import { escapeHtml, formatBytes, formatDate, plural, timeAgo } from "./format";
 import { icons } from "./icons";
 import type { CleanResult, ProviderScan, ScanResult } from "./types";
@@ -87,7 +87,9 @@ function renderGpu(): void {
   const disk = data.disk
     ? `<span>${escapeHtml(data.disk.drive)} ${formatBytes(data.disk.free)} free of ${formatBytes(data.disk.total)}</span>`
     : "";
-  el.gpu.innerHTML = `${rows}<div class="gpu-last"><span>${last}</span>${disk}</div>`;
+  const total =
+    data.totalFreed > 0 ? `<span>${formatBytes(data.totalFreed)} freed so far</span>` : "";
+  el.gpu.innerHTML = `${rows}<div class="gpu-last"><span>${last}</span>${disk}${total}</div>`;
 }
 
 interface Notice {
@@ -271,7 +273,7 @@ function renderList(): void {
         ? `<ul class="folders">${p.folders
             .map(
               (f) =>
-                `<li><span class="path" title="${escapeHtml(f.path)}"><bdi>${escapeHtml(f.path)}</bdi></span><span class="size">${formatBytes(f.bytes)}</span></li>`,
+                `<li><span class="path" title="${escapeHtml(f.path)}"><bdi>${escapeHtml(f.path)}</bdi></span><span class="size">${formatBytes(f.bytes)}</span><button class="open" type="button" data-open="${escapeHtml(f.path)}" aria-label="Open ${escapeHtml(f.path)}">Open</button></li>`,
             )
             .join("")}</ul>`
         : `<p class="detail-text">Nothing found on this PC.</p>`;
@@ -344,29 +346,6 @@ function render(): void {
 }
 
 // ---- report --------------------------------------------------------------
-
-function buildReport(): string {
-  const r = state.result;
-  const data = state.scan;
-  if (!r) return "";
-
-  const lines = [`ShaderSweep ${__APP_VERSION__}`, r.preview ? "Preview, nothing was deleted" : "Clean"];
-  for (const a of data?.adapters ?? []) {
-    lines.push(`GPU: ${a.name}, driver ${a.version} (${a.date})`);
-  }
-  lines.push(`${r.preview ? "Would free" : "Freed"}: ${formatBytes(r.freed)}`);
-
-  for (const item of r.providers) {
-    const label = data?.providers.find((p) => p.id === item.id)?.label ?? item.id;
-    const parts = [`${r.preview ? "would free" : "freed"} ${formatBytes(item.freed)}`];
-    if (!r.preview) parts.push(`${plural(item.removedFiles, "file")} removed`);
-    if (item.queuedFiles) parts.push(`${item.queuedFiles} queued for restart (${formatBytes(item.queuedBytes)})`);
-    if (item.failedFiles) parts.push(`${item.failedFiles} in use (${formatBytes(item.failedBytes)})`);
-    lines.push(`- ${label}: ${parts.join(", ")}`);
-    if (item.holders.length) lines.push(`  held by: ${item.holders.join(", ")}`);
-  }
-  return lines.join("\n");
-}
 
 async function copyText(text: string): Promise<boolean> {
   try {
@@ -456,7 +435,7 @@ el.rescan.addEventListener("click", () => void runScan());
 
 el.summary.addEventListener("click", async (event) => {
   if (!(event.target as HTMLElement).closest("#copy")) return;
-  if (await copyText(buildReport())) {
+  if (await copyText(state.result?.report ?? "")) {
     state.copied = true;
     renderSummary();
     setTimeout(() => {
@@ -489,6 +468,11 @@ el.list.addEventListener("change", (event) => {
 });
 
 el.list.addEventListener("click", (event) => {
+  const open = (event.target as HTMLElement).closest<HTMLElement>("[data-open]");
+  if (open?.dataset.open) {
+    void reveal(open.dataset.open).catch(() => {});
+    return;
+  }
   const peek = (event.target as HTMLElement).closest<HTMLElement>("[data-peek]");
   if (!peek?.dataset.peek) return;
   const id = peek.dataset.peek;

@@ -14,6 +14,10 @@ ShaderSweep, a small Windows app that replaces clicking through the script. The 
 - Free disk space for the system drive, a plain explanation under every cache row, and a **Copy report** button.
 - **Preview only** mode that measures and deletes nothing.
 - Every user profile on the machine is covered, not just the current one, along with the system and service profiles.
+- Headless mode (`--clean`, `--preview`, `--only`, `--installers`, `--no-restart-queue`) with exit codes, for chaining after a driver install.
+- The result of each real clean is saved to `last-run.txt`, and the app shows how much it has freed in total.
+- An **Open** button beside each folder, which only opens folders the app itself manages.
+- A tip that NVIDIA caps its cache at 16 GB by default and where to change it.
 
 ### Changed
 
@@ -27,7 +31,7 @@ ShaderSweep, a small Windows app that replaces clicking through the script. The 
 
 ### Project
 
-- Rust backend with 40 tests, formatted with rustfmt and clean under clippy with warnings denied.
+- Rust backend with 54 tests, including full scan and clean runs against a made up machine, formatted with rustfmt and clean under clippy with warnings denied.
 - CI builds and tests the app on every push, and a tagged release publishes the exe, a zip and a SHA-256 hash.
 
 ## 1.2.0

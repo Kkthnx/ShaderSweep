@@ -6,7 +6,7 @@
   --line-strong: #2a3a4e;
   --text: #e8eef6;
   --muted: #8a9bb0;
-  --faint: #5b6a7d;
+  --faint: #7a8ba2;
   --accent: #38bdf8;
   --accent-hover: #7dd3fc;
   --accent-ink: #04141f;
@@ -710,4 +710,20 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.open {
+  flex: none;
+  padding: 0 0 0 2px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.open:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
