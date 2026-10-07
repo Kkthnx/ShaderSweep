@@ -42,3 +42,11 @@ export function formatDate(iso: string): string {
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count.toLocaleString("en")} ${count === 1 ? one : many}`;
 }
+
+/** `0:07` or `1:32` for a span of milliseconds. */
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = String(total % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}

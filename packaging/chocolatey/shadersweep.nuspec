@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>shadersweep</id>
+    <version>2.0.0</version>
+    <title>ShaderSweep</title>
+    <authors>Kkthnx</authors>
+    <owners>Kkthnx</owners>
+    <projectUrl>https://github.com/Kkthnx/ShaderSweep</projectUrl>
+    <packageSourceUrl>https://github.com/Kkthnx/ShaderSweep/tree/main/packaging/chocolatey</packageSourceUrl>
+    <bugTrackerUrl>https://github.com/Kkthnx/ShaderSweep/issues</bugTrackerUrl>
+    <projectSourceUrl>https://github.com/Kkthnx/ShaderSweep</projectSourceUrl>
+    <licenseUrl>https://github.com/Kkthnx/ShaderSweep/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>shader-cache gpu nvidia amd intel gaming cleanup discord steam epic portable</tags>
+    <summary>Clear GPU, Windows and game launcher caches in one click.</summary>
+    <description>
+ShaderSweep clears the shader caches your graphics driver and Windows build up, plus the caches of game launchers such as Discord, Steam, Epic Games Launcher and Battle.net, and a few Windows housekeeping items.
+
+It scans first and shows every cache with its size before anything is deleted, notices when a new GPU driver arrives, names the program holding any file it cannot remove, and checks after a restart that Windows really removed the files it queued.
+
+Only folders on a fixed list of regenerable caches are ever touched. Logins, settings and installed games are not.
+
+The app asks for administrator rights when it starts, because some caches belong to system accounts. It also has a headless mode: ShaderSweep --clean --preview
+    </description>
+    <releaseNotes>https://github.com/Kkthnx/ShaderSweep/blob/main/CHANGELOG.md</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

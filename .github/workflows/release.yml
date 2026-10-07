@@ -64,3 +64,20 @@ jobs:
             "ShaderSweep-$version.exe.sha256" `
             --title "ShaderSweep $version" `
             --notes-file release-notes.md
+
+      # Keeps the Scoop manifest and the Chocolatey package pointing at the
+      # release that was just published.
+      - name: Update package manifests
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          $hash = (Get-Content "ShaderSweep-$version.exe.sha256").Trim()
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B main origin/main
+          ./packaging/update-manifests.ps1 -Version $version -Hash $hash
+          git add bucket packaging
+          if (git diff --cached --quiet) { exit 0 }
+          git commit -m "Update package manifests for $version"
+          git push origin main

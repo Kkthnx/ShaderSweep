@@ -12,6 +12,7 @@ use windows_sys::Win32::System::RestartManager::{
     RmEndSession, RmGetList, RmRegisterResources, RmStartSession, CCH_RM_SESSION_KEY,
     RM_PROCESS_INFO,
 };
+use windows_sys::Win32::System::SystemInformation::GetTickCount64;
 use windows_sys::Win32::UI::Shell::IsUserAnAdmin;
 
 fn wide(text: &OsStr) -> Vec<u16> {
@@ -33,6 +34,18 @@ pub fn delete_on_reboot(path: &Path) -> bool {
     // the call, and a null destination is the documented way to ask for a
     // delete.
     unsafe { MoveFileExW(from.as_ptr(), std::ptr::null(), MOVEFILE_DELAY_UNTIL_REBOOT) != 0 }
+}
+
+/// When Windows last started, in seconds since the Unix epoch. A restart
+/// resets the uptime counter, so this moves forward after one.
+pub fn boot_time_secs() -> u64 {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    // SAFETY: takes no arguments and only reads the uptime counter.
+    let uptime = unsafe { GetTickCount64() } / 1000;
+    now.saturating_sub(uptime)
 }
 
 pub fn is_admin() -> bool {
@@ -137,6 +150,17 @@ mod tests {
     use super::*;
     use std::fs;
     use std::os::windows::fs::OpenOptionsExt;
+
+    #[test]
+    fn the_boot_time_is_in_the_past_and_not_absurd() {
+        let boot = boot_time_secs();
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        assert!(boot < now, "Windows started before now");
+        assert!(now - boot < 3 * 365 * 86_400, "uptime of years is a bug");
+    }
 
     #[test]
     fn reports_free_space_for_the_system_drive() {

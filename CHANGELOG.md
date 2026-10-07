@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.1.0
+
+### Added
+
+- **Live progress.** While it cleans, the window shows the space freed counting up, a progress bar with a percentage, files removed, elapsed time, a streaming feed of the file being deleted, and a live total on each row. The scan shows which cache it is checking.
+- **Cancel.** Stops a clean between files. What is already gone stays gone, and a stopped run is never recorded as a finished clean.
+- **Game launcher caches.** Discord (including PTB and Canary), Epic Games Launcher, Battle.net, the Steam client web cache, the EA app, Ubisoft Connect, GOG Galaxy and the World of Warcraft `Cache` folder. Each is matched by the tail of its path, so logins, settings, `WTF`, `Interface` and the games themselves are never in scope.
+- **Running app detection.** A row for a program that is open right now starts unticked, says which app to close, and is skipped by default in headless mode. Launcher files are never queued for a restart.
+- **Windows housekeeping**, with the risky rows off by default: temporary files (only files a day old), the thumbnail cache, Delivery Optimization files, Windows Update downloads, Prefetch, error reports and crash dumps, GPU crash dumps, the Recycle Bin and the Event Viewer logs. The Security log is never cleared.
+- **Restart now.** Asks you to save your work, then starts a 60 second countdown you can cancel. It uses the Windows restart API with force turned off, so an app with unsaved changes makes Windows stop and ask. It deliberately avoids `shutdown /r /t`, which Microsoft documents as implying `/f`.
+- **Restart verification.** The files queued for deletion are remembered, and on the next launch the app tells you how many Windows removed and how many were still there.
+- **Install from a terminal.** A PowerShell installer that checks the SHA-256 hash and needs no administrator rights, a Scoop manifest, and a Chocolatey package. The release workflow keeps the manifests pointing at the newest release.
+- Links to Kkthnx's GitHub and website in the app and the README, opened from a fixed list in the backend.
+- `--include` for headless mode, to add rows that start off.
+
+### Changed
+
+- Rows are grouped into shader caches, launchers and housekeeping. Rows with nothing to clear in the last two are hidden.
+- The size shown for a row is only what a clean can really remove, so skipped recent files are not promised.
+- The driver update notice now says that drivers ignore shaders built for an older version, so cleaning mainly reclaims space and helps when something is wrong.
+
+### Safety
+
+- Allow list rules are now the tail of a path, so a bare `Cache` folder is never trusted on its own.
+- The Explorer folder is only ever cleared through a filter that names the thumbnail database files.
+- Tests for the allow list now name the folders beside each cache that must never match.
+
+### Project
+
+- Rust backend with 99 tests, including complete scan and clean runs against a made up machine.
+
 ## 2.0.0
 
 ShaderSweep, a small Windows app that replaces clicking through the script. The PowerShell script stays in `NvidiaShaderCleanup/` for automation and is unchanged.

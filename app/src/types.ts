@@ -10,18 +10,23 @@ export interface Folder {
   bytes: number;
 }
 
+export type GroupId = "shaders" | "launchers" | "housekeeping";
+
 export interface ProviderScan {
   id: string;
   label: string;
   blurb: string;
   note: string | null;
+  caution: string | null;
   about: string;
+  group: GroupId;
   vendor: string | null;
   defaultOn: boolean;
   found: boolean;
   bytes: number;
   files: number;
   folders: Folder[];
+  running: string[];
 }
 
 export interface DriverChange {
@@ -36,14 +41,23 @@ export interface DiskInfo {
   total: number;
 }
 
+export interface QueueCheck {
+  restarted: boolean;
+  removed: number;
+  removedBytes: number;
+  remaining: number;
+  remainingBytes: number;
+}
+
 export interface ScanResult {
   isAdmin: boolean;
   disk: DiskInfo | null;
   pendingRestart: number;
-  totalFreed: number;
+  queueCheck: QueueCheck | null;
   adapters: Adapter[];
   providers: ProviderScan[];
   lastCleanAt: number | null;
+  totalFreed: number;
   driverChanges: DriverChange[];
 }
 
@@ -55,6 +69,7 @@ export interface ProviderResult {
   queuedBytes: number;
   failedFiles: number;
   failedBytes: number;
+  skippedRecent: number;
   holders: string[];
 }
 
@@ -65,6 +80,7 @@ export interface CleanResult {
   queuedFiles: number;
   queuedBytes: number;
   failedFiles: number;
+  cancelled: boolean;
   report: string;
 }
 
@@ -72,4 +88,14 @@ export interface Progress {
   id: string;
   done: boolean;
   freed: number;
+  files: number;
+  current: string | null;
 }
+
+export interface ScanStep {
+  label: string;
+  checked: number;
+  total: number;
+}
+
+export type LinkName = "github" | "website" | "source" | "issues" | "releases";

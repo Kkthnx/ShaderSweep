@@ -75,6 +75,9 @@ pub fn build(
         "Freed"
     };
     lines.push(format!("{verb}: {}", format_bytes(result.freed)));
+    if result.cancelled {
+        lines.push("Stopped early at the user's request".to_string());
+    }
 
     for item in &result.providers {
         let mut parts = vec![format!(
@@ -102,6 +105,9 @@ pub fn build(
                 item.failed_files,
                 format_bytes(item.failed_bytes)
             ));
+        }
+        if item.skipped_recent > 0 {
+            parts.push(format!("{} recent files left alone", item.skipped_recent));
         }
         lines.push(format!("- {}: {}", label_of(&item.id), parts.join(", ")));
         if !item.holders.is_empty() {
@@ -144,12 +150,14 @@ mod tests {
                 queued_bytes: 100,
                 failed_files: 1,
                 failed_bytes: 50,
+                skipped_recent: 4,
                 holders: vec!["game.exe".into()],
             }],
             freed: 2048,
             queued_files: 2,
             queued_bytes: 100,
             failed_files: 1,
+            cancelled: true,
             report: String::new(),
         };
         let adapter = Adapter {
@@ -167,6 +175,8 @@ mod tests {
         assert!(text.contains("GPU: RTX 5070, driver 616.92 (2026-09-04)"));
         assert!(text.contains("Freed: 2.00 KB"));
         assert!(text.contains("- NVIDIA shader cache: freed 2.00 KB, 3 files removed, 2 queued for restart (100 B), 1 in use (50 B)"));
+        assert!(text.contains("4 recent files left alone"));
+        assert!(text.contains("Stopped early"));
         assert!(text.contains("held by: game.exe"));
     }
 }

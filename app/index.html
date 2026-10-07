@@ -17,7 +17,8 @@
         <section class="gpu" id="gpu" aria-label="Graphics driver"></section>
         <section id="notice" aria-live="polite"></section>
         <section class="summary" id="summary" aria-live="polite"></section>
-        <section class="list" id="list" aria-label="Caches to clear"></section>
+        <section class="list" id="list" aria-label="What to clean"></section>
+        <footer class="credit" id="credit"></footer>
       </div>
 
       <footer class="dock">
@@ -39,11 +40,33 @@
               <button class="switch" id="opt-queue" type="button" role="switch" aria-checked="true" aria-labelledby="opt-queue-label"></button>
             </div>
             <p class="about" id="about"></p>
+            <div class="links" id="links"></div>
           </div>
         </details>
         <button class="primary" id="go" type="button" disabled>Scanning</button>
       </footer>
     </main>
+
+    <dialog class="dialog" id="restart-dialog" aria-labelledby="restart-title" aria-describedby="restart-body">
+      <form method="dialog" class="dialog-card">
+        <h2 id="restart-title">Restart your PC?</h2>
+        <div id="restart-body">
+          <p class="dialog-lead">Save your work first. ShaderSweep never closes your apps for you.</p>
+          <ul class="checklist">
+            <li>Save your documents, projects and game progress.</li>
+            <li>Close games and anything that is recording, rendering or downloading.</li>
+            <li>If an app has unsaved changes, Windows asks you about it and waits for you.</li>
+            <li>After you press Restart you get a countdown, and you can cancel until it ends.</li>
+          </ul>
+          <p class="dialog-note">Use Restart rather than Shut down. Windows only finishes removing queued files on a full restart.</p>
+        </div>
+        <div class="dialog-actions">
+          <button class="secondary" value="cancel" id="restart-cancel">Not now</button>
+          <button class="primary compact" value="confirm" id="restart-confirm" autofocus>Restart in 60 seconds</button>
+        </div>
+      </form>
+    </dialog>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
