@@ -138,6 +138,8 @@ The suite includes full scan and clean runs against a made up machine in a temp 
 
 ## The PowerShell script
 
+<img src="assets/powershell-script-banner.png" alt="NVIDIA Shader Cache Cleanup, the original PowerShell script" width="520" />
+
 The original script is still in `NvidiaShaderCleanup/` for automation, for example chaining it after a driver install with `-NoPause`. It covers the NVIDIA and Windows caches only. See [CHANGELOG.md](CHANGELOG.md) for its history.
 
 ---
