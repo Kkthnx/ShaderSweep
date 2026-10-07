@@ -823,6 +823,13 @@ setInterval(() => {
   if (state.restart?.kind === "counting") renderNotice();
 }, 500);
 
+// Only the list scrolls. If anything ever scrolls the page itself, such as a
+// focus jump, put it straight back so the window can never end up shifted.
+window.addEventListener("scroll", () => {
+  const page = document.scrollingElement;
+  if (page && (page.scrollTop !== 0 || page.scrollLeft !== 0)) page.scrollTo(0, 0);
+});
+
 if (!import.meta.env.DEV) {
   // A cleaner should feel like an app, not a web page.
   document.addEventListener("contextmenu", (event) => event.preventDefault());

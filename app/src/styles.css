@@ -310,6 +310,7 @@ button {
 }
 
 .row {
+  position: relative;
   display: grid;
   grid-template-columns: 22px 1fr auto;
   align-items: center;
@@ -327,10 +328,19 @@ button {
   opacity: 0.5;
 }
 
+/* The real checkbox is invisible but still focusable. It must sit inside its
+   own row. With no positioned ancestor it lands wherever the layout puts it,
+   and focusing it scrolls the whole page to reach it. */
 .row input {
   position: absolute;
+  top: 50%;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  margin: 0;
   opacity: 0;
   pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .box {

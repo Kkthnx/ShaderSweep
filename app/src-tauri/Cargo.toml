@@ -1,6 +1,6 @@
 [package]
 name = "shadersweep"
-version = "2.1.0"
+version = "2.1.1"
 description = "Clears GPU and Windows shader caches after driver updates"
 authors = ["Kkthnx"]
 license = "MIT"

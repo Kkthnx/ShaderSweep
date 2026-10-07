@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.1
+
+### Fixed
+
+- Clicking a row near the bottom of the list, such as Discord, could scroll the whole window out of view and leave it looking blank. The invisible checkbox behind each row was not anchored to its row, so focusing it made the browser scroll the entire page to reach it. It now sits inside its own row, and a guard puts the page straight back if anything ever scrolls it. Checked by focusing every row in a long list and confirming the page never moves.
+
 ## 2.1.0
 
 ### Added
