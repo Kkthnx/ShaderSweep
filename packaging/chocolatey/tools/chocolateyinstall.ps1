@@ -7,8 +7,8 @@ $exe = Join-Path $toolsDir 'ShaderSweep.exe'
 $packageArgs = @{
     packageName    = $env:ChocolateyPackageName
     fileFullPath   = $exe
-    url64bit       = 'https://github.com/Kkthnx/ShaderSweep/releases/download/2.0.0/ShaderSweep-2.0.0.exe'
-    checksum64     = '54E30AEF01392D84A7D620E1D5557C19C5FF85DCE2A8AC99354EF82F63267CD4'
+    url64bit       = 'https://github.com/Kkthnx/ShaderSweep/releases/download/2.1.0/ShaderSweep-2.1.0.exe'
+    checksum64     = '191E2194DED1E89A6A7ACC071D4A852B66D03E55C27586D54012F8F941267BBA'
     checksumType64 = 'sha256'
 }
 Get-ChocolateyWebFile @packageArgs
