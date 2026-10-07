@@ -1,0 +1,66 @@
+name: Release
+
+# Tag a version such as 2.0.0 to build and publish ShaderSweep.
+on:
+  push:
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+
+      - name: Install packages
+        working-directory: app
+        run: npm ci --ignore-scripts
+
+      - name: Build
+        working-directory: app
+        run: npm run tauri -- build --no-bundle
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          $stage = "ShaderSweep-$version"
+          New-Item -ItemType Directory $stage | Out-Null
+          Copy-Item app/src-tauri/target/release/shadersweep.exe "$stage/ShaderSweep.exe"
+          Copy-Item README.md, LICENSE, CHANGELOG.md $stage
+          Compress-Archive -Path $stage -DestinationPath "$stage.zip"
+          Copy-Item app/src-tauri/target/release/shadersweep.exe "ShaderSweep-$version.exe"
+          (Get-FileHash "ShaderSweep-$version.exe" -Algorithm SHA256).Hash | Set-Content "ShaderSweep-$version.exe.sha256"
+
+      - name: Publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = "${{ github.ref_name }}"
+          $changelog = Get-Content CHANGELOG.md -Raw
+          $pattern = "(?ms)^## $([regex]::Escape($version))\s*\r?\n(.*?)(?=^## |\z)"
+          $notes = if ($changelog -match $pattern) { $Matches[1].Trim() } else { "See CHANGELOG.md." }
+          Set-Content release-notes.md $notes
+          gh release create $version `
+            "ShaderSweep-$version.zip" `
+            "ShaderSweep-$version.exe" `
+            "ShaderSweep-$version.exe.sha256" `
+            --title "ShaderSweep $version" `
+            --notes-file release-notes.md

@@ -1,177 +1,142 @@
 <div align="center">
 
-<img width="1280" height="640" alt="banner-1280x640" src="https://github.com/user-attachments/assets/9add9003-7c5e-411a-9252-2b62a9f21365" />
+<img src="app/src-tauri/icons/128x128.png" alt="ShaderSweep icon" width="96" />
 
-# NVIDIA Shader Cache Cleanup
+# ShaderSweep
+
+**Clear NVIDIA, AMD, Intel, Windows and Steam shader caches in one click, and find out when a new driver makes it worth doing.**
 
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)](#requirements)
-[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE)](#requirements)
-[![License: MIT](https://img.shields.io/badge/License-MIT-76B900)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-38bdf8)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/Kkthnx/NvidiaShaderCleanup?color=38bdf8)](https://github.com/Kkthnx/NvidiaShaderCleanup/releases/latest)
+
+<img src="assets/shadersweep-done.png" alt="ShaderSweep after a clean, showing 9.82 GB freed" width="300" />
+<img src="assets/shadersweep-ready.png" alt="ShaderSweep in preview mode" width="300" />
 
 </div>
 
-A small Windows utility that clears the **NVIDIA** and **Windows DirectX/OpenGL shader caches** in one click.
+ShaderSweep is a small Windows app (about 3 MB, no installer) that empties the shader caches your graphics driver and Windows build up. It shows exactly what it found and how big each cache is before it deletes anything, and it reports what it really freed afterwards.
 
-Run it after installing a new GPU driver, or whenever games start **crashing on launch, stuttering, flickering, or showing visual artifacts**. The driver and Windows rebuild these caches the next time you launch each game.
-
----
-
-## What is the shader cache?
-
-When you run a game, your GPU driver compiles the game's shaders into binaries that match your exact GPU and driver version, then stores them on disk. On later launches the driver reuses those cached binaries so games load faster and stutter less.
-
-Those files can go stale or get corrupted after a driver update or a game patch. When that happens you see crashes, hitching, or graphical glitches. Deleting the cache forces the driver to rebuild clean copies. Nothing important is lost, so saves, settings, and accounts are untouched. NVIDIA documents the same fix in [Deleting NVIDIA Shader Cache files](https://nvidia.custhelp.com/app/answers/detail/a_id/5735/).
-
-> The first launch after a cleanup is meant to be slower while shaders recompile. That is normal and it happens once per game.
+Stale or corrupted shader caches are a common cause of crashes on launch, stutter, flickering and visual artifacts. NVIDIA's own support article tells you to delete them for that reason: [Deleting NVIDIA Shader Cache files](https://nvidia.custhelp.com/app/answers/detail/a_id/5735/).
 
 ---
 
-## What it does
+## When to run it
 
-1. Stops the NVIDIA background apps (NVIDIA App, overlay, ShadowPlay/Share, Broadcast, helpers) so they release their file locks.
-2. Temporarily stops the NVIDIA container services, along with anything depending on them, so the caches those services hold open can be cleared. Your screen may flicker once while the display service restarts.
-3. Finds every known shader cache folder and deletes its contents. The folders themselves are kept so the driver refills them in place.
-4. Reports what was freed, per folder and in total.
+- A game crashes on launch, stutters, flickers or shows odd artifacts.
+- You just installed a new GPU driver and want the old driver's leftovers gone.
+- You want the disk space back. On a gaming PC the NVIDIA cache alone often reaches several gigabytes.
 
-The services are always restarted, even if the cleanup hits an error part way through, so the tool never leaves your machine with the display service stopped.
+ShaderSweep remembers which driver each GPU had the last time you cleaned. When the driver changes, it tells you.
 
-It does not touch your games, drivers, saves, or settings, and it skips any folder that does not exist.
-
----
-
-## Cache locations cleared
-
-The tool does not hard code full paths. It looks under the known NVIDIA roots for folders named `DXCache`, `GLCache`, `ComputeCache`, `OptixCache`, or `NV_Cache`, so new driver layouts such as `PerDriverVersion` are picked up without a code change. Nothing outside that name list is ever deleted.
-
-Roots searched, per user profile plus the system and service profiles:
-
-| Root | Holds |
-| --- | --- |
-| `%LOCALAPPDATA%\NVIDIA` | `DXCache`, `GLCache`, `ComputeCache`, `OptixCache` |
-| `%LOCALAPPDATA%\NVIDIA Corporation` | Legacy `NV_Cache` |
-| `%LOCALAPPDATA%Low\NVIDIA` | `DXCache` and the `PerDriverVersion` tree (driver 545.xx and newer) |
-| `%APPDATA%\NVIDIA` | `ComputeCache` |
-| `%ProgramData%\NVIDIA Corporation` | Legacy `NV_Cache` |
-| `%TEMP%\NVIDIA Corporation` | Transient driver cache |
-| `...\config\systemprofile\AppData\...` | Caches owned by the driver **service**, the reason admin rights are needed |
-| `...\ServiceProfiles\LocalService\AppData\...` | Same, for the service account |
-
-Also cleared:
-
-| Path | Notes |
-| --- | --- |
-| `%LOCALAPPDATA%\D3DSCache` | Windows DirectX shader cache, any GPU |
-| `%LOCALAPPDATA%\Microsoft\D3DSCache` | Alternate Windows location |
-| `%__GL_SHADER_DISK_CACHE_PATH%\GLCache` | Only when you have moved the OpenGL cache with that NVIDIA variable |
-
-Turn the Windows cache off with `-IncludeD3DSCache:$false` if you only want the NVIDIA ones.
+**Cleaning after every driver update is optional, and we would rather say so.** Drivers and Windows version their caches, so shaders built for an older driver are ignored on their own. Microsoft's spec says the D3D cache is "implicitly versioned by the driver being used". Cleaning mainly reclaims the old space and helps when something is actually wrong. If you turned on **Auto Shader Compilation** in the NVIDIA App (driver 595.97 and newer), it pre-builds shaders after an update, so leave the NVIDIA row unchecked and keep that work.
 
 ---
 
-## How to use
+## Download
 
-### Option A, download and run (recommended)
+Grab `ShaderSweep-<version>.zip` or the single `.exe` from the [latest release](https://github.com/Kkthnx/NvidiaShaderCleanup/releases/latest), then run it. Windows asks for administrator rights because some caches belong to the system and driver service accounts.
 
-1. Go to the repository, click **Code, Download ZIP**, and extract it.
-2. Open the `NvidiaShaderCleanup` folder.
-3. Double-click **`NvidiaShaderCleanup.bat`**.
-4. Approve the **User Account Control** prompt. Admin rights are required to clear the caches owned by the driver service.
-5. Wait for `Cleanup Complete`, then press **Enter** to close.
-
-### Option B, clone with Git
-
-```bash
-git clone https://github.com/Kkthnx/NvidiaShaderCleanup.git
-cd NvidiaShaderCleanup/NvidiaShaderCleanup
-```
-
-Then double-click `NvidiaShaderCleanup.bat`.
-
-> Close your games first. The tool stops the NVIDIA background processes for you, but a running game keeps its own cache files locked.
-
-### Options
-
-The launcher passes any arguments straight through, so `NvidiaShaderCleanup.bat -DryRun` works. You can also call the script directly:
-
-```powershell
-# Preview only. Shows what would be cleared and how much it would free, deletes nothing
-.\NvidiaShaderCleanup.ps1 -DryRun
-
-# Clear every local user profile, write a log, exit on its own
-.\NvidiaShaderCleanup.ps1 -AllUsers -NoPause -LogPath .\cleanup.log
-```
-
-| Flag | Description |
-| --- | --- |
-| `-DryRun` | Preview mode. Reports what would be cleared without stopping anything or deleting files. |
-| `-AllUsers` | Also clear every other local user profile, not just the current one. |
-| `-IncludeD3DSCache:$false` | Leave the Windows DirectX shader cache alone. On by default. |
-| `-SkipServices` | Do not touch any Windows service. Caches held open by the driver are then likely to be skipped. |
-| `-SkipRebootSchedule` | Do not queue driver held files for deletion on the next reboot. |
-| `-NoPause` | Skip the "Press Enter to exit" prompt. |
-| `-LogPath <file>` | Write a full transcript of the run to that file. |
-| `-WhatIf` | Standard PowerShell preview, same idea as `-DryRun`. |
-
-Exit codes: `0` everything cleared, `1` one or more folders were only partly cleared, `2` a fatal error or a declined elevation prompt.
-
-The script self-elevates if you run it without administrator rights.
+The exe is not code signed yet, so Windows SmartScreen may warn you the first time. Each release lists a SHA-256 hash you can check. The source is all here, and CI builds it.
 
 ---
 
-## How this differs from NVIDIA's manual steps
+## What it clears
 
-NVIDIA's article tells you to set **Shader Cache Size** to **Off** in the NVIDIA App, reboot, delete the folders by hand, then turn the setting back on. That works because a rebooted machine with caching off is not holding the files open.
+Every row is a folder name that only ever holds regenerable cache data. Folders are found by name under known vendor locations, so new driver layouts such as `PerDriverVersion` are picked up automatically.
 
-This tool takes the other route to the same place. It stops the processes and services that hold the handles, clears the folders, then puts the services back. No setting to remember to restore.
+| Row | Where | Source |
+| --- | --- | --- |
+| NVIDIA shader cache | `AppData\Local\NVIDIA` (`DXCache`, `GLCache`), `LocalLow\NVIDIA` (`DXCache`, `PerDriverVersion`), `Roaming\NVIDIA\ComputeCache`, `NV_Cache`, plus the system and service profiles | [NVIDIA support](https://nvidia.custhelp.com/app/answers/detail/a_id/5735/), the [DDU cache list](https://www.wagnardsoft.com/forums/viewtopic.php?t=3821) |
+| AMD shader cache | `AppData\Local\AMD` (`DX9Cache`, `DxCache`, `DxcCache`, `OglCache`, `VkCache`) | [AMD cache investigation](https://gist.github.com/pbhj/ccae7ef1d1446f4450005de139c601c4) |
+| Intel shader cache | `AppData\LocalLow\Intel\ShaderCache` | [Microsoft Q&A](https://learn.microsoft.com/en-us/answers/questions/3975387/is-it-safe-to-delete-locallowintelshadercache) |
+| Windows DirectX cache | `AppData\Local\D3DSCache` | [DirectX spec](https://microsoft.github.io/DirectX-Specs/d3d/ShaderCache.html) and the Disk Cleanup entry Windows ships for it |
+| Steam shader cache | `steamapps\shadercache` in every Steam library | Steam install and `libraryfolders.vdf` |
+| Driver installer leftovers | `C:\AMD` and `C:\NVIDIA\DisplayDriver` | Extracted installers. **Off by default** so you can still roll back |
 
-A small number of `.nvph` index files are held open by the kernel mode display driver itself. Nothing you can stop will release them, which is the real reason NVIDIA's steps involve a reboot. Rather than tell you to close games that are not running, the tool queues those files for deletion on your next reboot using the same `MoveFileEx` mechanism Windows installers use. They are a few files totalling a few megabytes. The bulk of the cache is cleared immediately.
+Your own profile, every other user profile, the system profile and the service accounts are all covered. If you moved the OpenGL cache with NVIDIA's `__GL_SHADER_DISK_CACHE_PATH` variable, that folder is cleared too.
 
-If a file is genuinely stuck and cannot even be queued, the tool says so per folder and exits with code `1` rather than pretending it succeeded.
+### What it never touches
 
-If you would rather follow NVIDIA's steps exactly, their article is linked above.
+Games, saves, settings, drivers, the NVIDIA App or any folder not on that list. The interface only ever sends a row name. The backend rebuilds every path itself and checks each one against a fixed allow list before deleting. It refuses drive roots, anything with `..` in it, and any cache folder that has been swapped for a junction or symlink. Links found *inside* a cache are removed without ever being followed.
+
+### Not included on purpose
+
+Prefetch, temp files, the Windows Update cache, the standby list and registry tweaks. Deleting Prefetch only slows the next launch of your apps, and the rest do nothing for frame rate. Tools that bundle them are mostly selling a feeling.
+
+---
+
+## Locked files
+
+A few cache files (`.nvph` index files) are held open by the kernel mode display driver itself. No program or service can release them while Windows runs, which is the real reason NVIDIA's steps involve a reboot.
+
+ShaderSweep queues those for deletion at the next restart using the same Windows call installers use. It reports them honestly as "held by the display driver" instead of counting them as freed. If something else is holding files, it asks Windows which program it is and names it, using the Restart Manager.
+
+Space freed is counted per file that was actually deleted, never taken from the size before the run.
+
+---
+
+## Options
+
+- **Preview only** shows what would be removed and deletes nothing.
+- **Remove driver held files at restart** can be turned off if you would rather leave them.
+
+**Copy report** on the result screen puts a plain text summary on your clipboard, handy for a bug report.
 
 ---
 
 ## Requirements
 
-- Windows 10 or Windows 11
-- An NVIDIA GPU and driver. The Windows DirectX cache is cleared either way.
-- Windows PowerShell 5.1 (built in) or PowerShell 7 and newer
-- Administrator rights, which the launcher requests for you
+- Windows 10 or 11 (64 bit) with the WebView2 runtime, which Windows 11 includes
+- Administrator rights
 
 ---
 
-## Files
+## Build from source
 
-| File | Purpose |
-| --- | --- |
-| `NvidiaShaderCleanup/NvidiaShaderCleanup.bat` | Launcher. Requests admin rights and runs the script. Double-click this one. |
-| `NvidiaShaderCleanup/NvidiaShaderCleanup.ps1` | The script that does the work. Can be run directly, it self-elevates. |
+You need Node 22 or newer, Rust, and the Visual Studio C++ build tools.
+
+```bash
+cd app
+npm ci --ignore-scripts
+npm run tauri -- build --no-bundle
+```
+
+The exe lands in `app/src-tauri/target/release/shadersweep.exe`. Run the checks with:
+
+```bash
+cd app/src-tauri
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+```
+
+Two tests are marked `ignored` because they write to the system's pending delete queue. Run them with `cargo test -- --ignored` when you want them.
+
+---
+
+## The PowerShell script
+
+The original script is still in `NvidiaShaderCleanup/` for automation, for example chaining it after a driver install with `-NoPause`. It covers the NVIDIA and Windows caches only. See [CHANGELOG.md](CHANGELOG.md) for its history.
 
 ---
 
 ## FAQ
 
 **Is it safe?**
-Yes. It only deletes regenerable cache files, and only folders whose name is on a fixed list. Windows and the NVIDIA driver rebuild them on demand. Your games, saves, settings, and drivers are not modified. Run `-DryRun` first if you want to see the exact list for your machine before anything is deleted.
+Yes. It only deletes folders from a fixed list of regenerable caches, and only after showing you their size. Use **Preview only** first if you want to see the exact result.
 
-**Why does my screen flicker during the run?**
-Restarting the NVIDIA Display Container service briefly resets the display. It comes back on its own.
+**Why does a game stutter right after I clean?**
+Its shaders are being rebuilt. That happens once per game and then goes away.
 
-**Why does a game stutter or load slowly right after I run this?**
-Its shaders are being recompiled and re-cached. That happens once per game after a cleanup and then goes away.
+**Why does it need administrator rights?**
+The driver service writes caches under the system profile, and queueing driver held files for restart writes to the machine part of the registry.
 
-**Do I need to set Shader Cache Size to Off first?**
-No. The tool stops the NVIDIA processes and services instead, which releases the same locks. See the section above.
+**Will it restart or flicker my screen?**
+No. It does not stop any service or process. Older versions of the script restarted NVIDIA services, and testing showed it made no difference to which files stayed locked.
 
-**It says files were queued for the next reboot.**
-That is normal and it is not an error. Those few files are held by the display driver and can only go at boot. Reboot when convenient, or leave them, since the driver overwrites them anyway.
-
-**It says a folder was only partly cleared.**
-A game or background app still had files open there. Close your games and the NVIDIA App, then run it again.
-
-**Does it work on AMD or Intel?**
-The Windows DirectX cache part does. The NVIDIA folders simply will not exist, so they are skipped.
+**Where does it keep its data?**
+One small file, `%LOCALAPPDATA%\ShaderSweep\state.json`, holding the time of the last clean and the driver version per GPU. Delete the exe and that folder to remove it completely.
 
 ---
 

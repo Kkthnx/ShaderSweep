@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>ShaderSweep</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="top">
+        <div class="brand" id="brand"></div>
+        <button class="icon-btn" id="rescan" type="button" aria-label="Scan again" title="Scan again"></button>
+      </header>
+
+      <div class="scroll">
+        <section class="gpu" id="gpu" aria-label="Graphics driver"></section>
+        <section id="notice" aria-live="polite"></section>
+        <section class="summary" id="summary" aria-live="polite"></section>
+        <section class="list" id="list" aria-label="Caches to clear"></section>
+      </div>
+
+      <footer class="dock">
+        <details class="options" id="options">
+          <summary>Options</summary>
+          <div class="option-rows">
+            <div class="option">
+              <div class="option-text">
+                <span id="opt-preview-label">Preview only</span>
+                <small>Show what would be removed and delete nothing.</small>
+              </div>
+              <button class="switch" id="opt-preview" type="button" role="switch" aria-checked="false" aria-labelledby="opt-preview-label"></button>
+            </div>
+            <div class="option">
+              <div class="option-text">
+                <span id="opt-queue-label">Remove driver held files at restart</span>
+                <small>A few files stay locked while the driver runs. Windows deletes them on the next boot.</small>
+              </div>
+              <button class="switch" id="opt-queue" type="button" role="switch" aria-checked="true" aria-labelledby="opt-queue-label"></button>
+            </div>
+            <p class="about" id="about"></p>
+          </div>
+        </details>
+        <button class="primary" id="go" type="button" disabled>Scanning</button>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

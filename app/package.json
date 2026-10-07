@@ -1,0 +1,23 @@
+{
+  "name": "shadersweep",
+  "private": true,
+  "version": "2.0.0",
+  "license": "MIT",
+  "author": "Kkthnx",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "icons": "powershell -NoProfile -File scripts/render-icon.ps1 && tauri icon app-icon.png -o src-tauri/icons"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.9.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.1",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.4"
+  }
+}

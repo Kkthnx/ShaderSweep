@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.0.0
+
+ShaderSweep, a small Windows app that replaces clicking through the script. The PowerShell script stays in `NvidiaShaderCleanup/` for automation and is unchanged.
+
+### Added
+
+- A single window that scans first and shows every cache with its size and exact folders before anything is deleted.
+- AMD, Intel, Windows DirectX and Steam caches alongside NVIDIA, plus an opt-in row for driver installer leftovers in `C:\AMD` and `C:\NVIDIA\DisplayDriver`.
+- Driver awareness. It records each GPU's driver version at the last clean and tells you when it changes, with honest wording about when cleaning is actually worth it and a note about NVIDIA's Auto Shader Compilation.
+- Names the program holding any file it could not remove, using the Windows Restart Manager.
+- Notices when files from an earlier clean are still waiting for a restart, and never queues the same file twice.
+- Free disk space for the system drive, a plain explanation under every cache row, and a **Copy report** button.
+- **Preview only** mode that measures and deletes nothing.
+- Every user profile on the machine is covered, not just the current one, along with the system and service profiles.
+
+### Changed
+
+- It no longer stops any NVIDIA service or process. Testing showed stopping them made no difference to which files stayed locked, and the restart queue covers the rest, so the riskiest part of the script is gone.
+- Freed space is counted per file actually deleted.
+
+### Safety
+
+- The interface only sends a row name. The backend rebuilds every path and checks it against a fixed allow list, refusing drive roots, `..` paths and junctions.
+- Links inside a cache are removed without being followed, covered by a test.
+
+### Project
+
+- Rust backend with 40 tests, formatted with rustfmt and clean under clippy with warnings denied.
+- CI builds and tests the app on every push, and a tagged release publishes the exe, a zip and a SHA-256 hash.
+
 ## 1.2.0
 
 ### Fixed
