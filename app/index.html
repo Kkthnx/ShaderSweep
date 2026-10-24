@@ -67,6 +67,21 @@
       </form>
     </dialog>
 
+    <dialog class="dialog" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+      <form method="dialog" class="dialog-card">
+        <h2 id="confirm-title">This cannot be undone</h2>
+        <div id="confirm-body">
+          <p class="dialog-lead">These are ticked and cannot be brought back once cleared:</p>
+          <ul class="checklist" id="confirm-list"></ul>
+          <p class="dialog-note">Everything else you ticked is rebuilt by Windows or your apps. Untick these if you are not sure.</p>
+        </div>
+        <div class="dialog-actions">
+          <button class="secondary" value="cancel" id="confirm-cancel" autofocus>Go back</button>
+          <button class="primary compact danger" value="confirm" id="confirm-go">Clear them</button>
+        </div>
+      </form>
+    </dialog>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

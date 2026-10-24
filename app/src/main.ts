@@ -37,6 +37,9 @@ const RESTART_SECONDS = 60;
 /** How many recent file names the activity feed keeps. */
 const ACTIVITY_LINES = 5;
 
+/** Rows whose contents cannot be brought back. A real clean asks first. */
+const IRREVERSIBLE = new Set(["recyclebin", "eventlogs"]);
+
 const GROUPS: { id: GroupId; title: string; hint: string; hideMissing: boolean }[] = [
   { id: "shaders", title: "Shader caches", hint: "Rebuilt by your GPU driver and Windows", hideMissing: false },
   { id: "launchers", title: "Game launchers and games", hint: "Saved web pages and images. Logins stay", hideMissing: true },
@@ -86,6 +89,8 @@ const el = {
   links: $("links"),
   dialog: $<HTMLDialogElement>("restart-dialog"),
   confirm: $<HTMLButtonElement>("restart-confirm"),
+  sure: $<HTMLDialogElement>("confirm-dialog"),
+  sureList: $("confirm-list"),
 };
 
 // Remembered between runs. Storage can be unavailable, so it is never required.
@@ -229,7 +234,8 @@ function notices(): Notice[] {
       out.push({
         kind: "hint",
         title: "Preview only",
-        body: "Nothing was deleted. Turn off Preview only in Options to clear these for real.",
+        body: "Nothing was deleted. This is what a real clean would remove.",
+        action: { id: "go-real", label: "Switch to a real clean" },
       });
     }
     if (r.queuedFiles > 0 && state.restart === null) {
@@ -477,7 +483,15 @@ function renderList(): void {
     return;
   }
 
-  el.list.innerHTML = GROUPS.map((group) => {
+  const picks =
+    state.phase === "ready"
+      ? `<div class="picks">Select
+          <button class="textlink" type="button" data-pick="recommended">Recommended</button>
+          <button class="textlink" type="button" data-pick="none">None</button>
+        </div>`
+      : "";
+
+  el.list.innerHTML = picks + GROUPS.map((group) => {
     const all = providers.filter((p) => p.group === group.id);
     const shown = group.hideMissing ? all.filter(hasData) : all;
     if (shown.length === 0) return "";
@@ -596,6 +610,19 @@ async function runScan(): Promise<void> {
   }
 }
 
+/** A real clean that includes something irreversible asks first. */
+function requestClean(): void {
+  const risky = state.preview ? [] : chosen().filter((p) => IRREVERSIBLE.has(p.id));
+  if (risky.length === 0) {
+    void runClean();
+    return;
+  }
+  el.sureList.innerHTML = risky
+    .map((p) => `<li>${escapeHtml(p.label)}, ${formatBytes(p.bytes)}</li>`)
+    .join("");
+  el.sure.showModal();
+}
+
 async function runClean(): Promise<void> {
   const ids = chosen().map((p) => p.id);
   if (ids.length === 0) return;
@@ -707,7 +734,7 @@ state.preview = store.get("preview", false);
 state.queue = store.get("queue", true);
 
 el.go.addEventListener("click", () => {
-  if (state.phase === "ready") void runClean();
+  if (state.phase === "ready") requestClean();
   else if (state.phase === "cleaning") void stopClean();
   else if (state.phase === "done" || state.phase === "error") void runScan();
 });
@@ -746,7 +773,15 @@ el.notice.addEventListener("click", (event) => {
   const action = (event.target as HTMLElement).closest<HTMLElement>("[data-action]")?.dataset.action;
   if (action === "restart") el.dialog.showModal();
   else if (action === "cancel-restart") void stopRestart();
-  else if (action === "dismiss-settled") {
+  else if (action === "go-real") {
+    // Back to the list with the same rows ticked, now set to delete.
+    state.preview = false;
+    store.set("preview", false);
+    state.result = null;
+    state.phase = "ready";
+    el.scroll.scrollTo({ top: 0 });
+    render();
+  } else if (action === "dismiss-settled") {
     state.settled = null;
     renderNotice();
   }
@@ -773,8 +808,21 @@ el.list.addEventListener("change", (event) => {
   el.scroll.scrollTop = scrollTop;
 });
 
+el.sure.addEventListener("close", () => {
+  const confirmed = el.sure.returnValue === "confirm";
+  el.sure.returnValue = "";
+  if (confirmed) void runClean();
+});
+
 el.list.addEventListener("click", (event) => {
   const target = event.target as HTMLElement;
+
+  const pick = target.closest<HTMLElement>("[data-pick]")?.dataset.pick;
+  if (pick && state.scan) {
+    state.selected = pick === "none" ? new Set() : defaultSelection(state.scan);
+    render();
+    return;
+  }
 
   const open = target.closest<HTMLElement>("[data-open]");
   if (open?.dataset.open) {

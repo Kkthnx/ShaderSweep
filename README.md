@@ -12,6 +12,8 @@ Clear NVIDIA, AMD, Intel, Windows and Steam shader caches, plus game launcher an
 - Clears shader caches for NVIDIA, AMD, Intel, Windows DirectX, and Steam, plus Chromium-style caches for Discord, Epic, Battle.net, Steam, the EA app, Ubisoft Connect, GOG Galaxy, and World of Warcraft.
 - Remembers each GPU's driver version from your last clean and tells you when it changes.
 - Counts freed space from files it really deleted. Locked files are queued for the next restart, and it reports whether they were removed.
+- Deletes with several threads at once, so large caches clear about three times faster than one file at a time.
+- Asks before it clears anything that cannot be undone, such as the Recycle Bin.
 - Runs headless with `--clean`, so you can chain it after a driver install or a scheduled task. No installer; the app asks for admin rights when you run it.
 
 ## Get it
@@ -30,6 +32,16 @@ Or grab the `ShaderSweep-<version>.zip` or single `.exe` from the [Releases page
 2. Scan to see every cache it found, with sizes and exact folders.
 3. Untick anything you want to keep. Running apps are unticked for you.
 4. Press Clean. If files are waiting for a restart, it asks before rebooting.
+
+## Command line
+
+```powershell
+ShaderSweep.exe --clean --preview          # measure only
+ShaderSweep.exe --clean                    # clean the default rows
+ShaderSweep.exe --clean --only nvidia,windows
+```
+
+Rows for an app that is running right now are skipped unless you name them with `--only`. Exit codes are 0 done, 1 some files were in use, 2 error. The result is saved to `%LOCALAPPDATA%\ShaderSweep\last-run.txt`. Run `ShaderSweep.exe --help` for every option.
 
 ## Support the work
 

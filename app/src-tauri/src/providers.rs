@@ -140,10 +140,15 @@ fn amd(ctx: &Context) -> Vec<PathBuf> {
     )
 }
 
+/// Intel's driver has written this under `LocalLow` for years. Some newer
+/// driver builds and guides put it under `Local` instead, so both are checked.
 fn intel(ctx: &Context) -> Vec<PathBuf> {
     existing(under_profiles(
         ctx,
-        &[r"AppData\LocalLow\Intel\ShaderCache"],
+        &[
+            r"AppData\LocalLow\Intel\ShaderCache",
+            r"AppData\Local\Intel\ShaderCache",
+        ],
     ))
 }
 
@@ -869,6 +874,7 @@ mod tests {
             r"AppData\Roaming\NVIDIA\ComputeCache",
             r"AppData\Local\AMD\VkCache",
             r"AppData\LocalLow\Intel\ShaderCache",
+            r"AppData\Local\Intel\ShaderCache",
             r"AppData\Local\D3DSCache",
             r"AppData\Roaming\discord\Cache",
             r"AppData\Roaming\discord\GPUCache",

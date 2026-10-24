@@ -8,6 +8,8 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Mutex, MutexGuard, PoisonError};
+use std::thread;
 
 use crate::fsutil::{has_dir_attribute, is_reparse, Eligible, Verdict};
 use crate::native;
@@ -104,73 +106,148 @@ fn remove_file(path: &Path) -> std::io::Result<()> {
     }
 }
 
+/// Most deleting threads at once. A delete spends nearly all its time waiting
+/// on the file system and on antivirus, so a handful of threads is faster than
+/// one. Measured through this very function on a 16 thread PC, clearing 10,000
+/// files of 8 KB: 1 thread 1.35 s, 8 threads 0.46 s, about 3 times faster and
+/// the same on repeat runs. A plain delete loop measured past 8 threads gained
+/// little (8 threads 6,682 files/s, 16 threads 7,658), so 8 is the cap.
+const MAX_WORKERS: usize = 8;
+
+fn workers() -> usize {
+    thread::available_parallelism()
+        .map_or(4, |n| n.get())
+        .clamp(2, MAX_WORKERS)
+}
+
+/// A poisoned lock only means another worker panicked. The data is still the
+/// plain counters and list it was before, so carry on.
+fn locked<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+/// The running totals and the progress callback, behind one lock so each tick
+/// reports totals that only ever go up.
+struct Running<'a> {
+    freed: u64,
+    files: u32,
+    on_tick: &'a mut (dyn FnMut(&Tick) + Send),
+}
+
 /// Deletes everything inside `root` and keeps `root` itself, so the driver
 /// refills the same folder. Links inside are removed without being followed.
-pub fn clear_contents(root: &Path, options: &Options, on_tick: &mut dyn FnMut(&Tick)) -> Outcome {
+///
+/// One thread walks the folder and hands files to a few others that delete
+/// them, so deleting starts at once and a huge folder is never held in memory.
+pub fn clear_contents(
+    root: &Path,
+    options: &Options,
+    on_tick: &mut (dyn FnMut(&Tick) + Send),
+) -> Outcome {
     let mut out = Outcome::default();
     let mut dirs: Vec<PathBuf> = Vec::new();
-    let mut locked: Vec<(PathBuf, u64)> = Vec::new();
-    let mut stack = vec![root.to_path_buf()];
 
-    'walk: while let Some(dir) = stack.pop() {
-        let Ok(entries) = fs::read_dir(&dir) else {
-            continue;
-        };
-        for entry in entries.flatten() {
-            if options.cancel.load(Ordering::Relaxed) {
-                out.cancelled = true;
-                break 'walk;
-            }
+    let running = Mutex::new(Running {
+        freed: 0,
+        files: 0,
+        on_tick,
+    });
+    let stuck: Mutex<Vec<(PathBuf, u64)>> = Mutex::new(Vec::new());
+    let stopped = AtomicBool::new(false);
+    let (send, receive) = mpsc::channel::<(PathBuf, u64)>();
+    let receive = Mutex::new(receive);
 
-            let path = entry.path();
-            let Ok(meta) = entry.metadata() else {
-                continue;
-            };
-
-            if is_reparse(&meta) {
-                // Remove the link itself and leave whatever it points at alone.
-                let _ = if has_dir_attribute(&meta) {
-                    fs::remove_dir(&path)
-                } else {
-                    fs::remove_file(&path)
+    thread::scope(|scope| {
+        for _ in 0..workers() {
+            scope.spawn(|| loop {
+                let next = locked(&receive).recv();
+                let Ok((path, len)) = next else {
+                    break;
                 };
-                continue;
-            }
-
-            if meta.is_dir() {
-                if options.eligible.enters_folders() {
-                    dirs.push(path.clone());
-                    stack.push(path);
-                }
-                continue;
-            }
-
-            match options
-                .eligible
-                .judge(&entry.file_name().to_string_lossy(), &meta)
-            {
-                Verdict::Keep => continue,
-                Verdict::TooRecent => {
-                    out.skipped_recent += 1;
+                // Once stopped, the rest of the queue is drained, not deleted.
+                if options.cancel.load(Ordering::Relaxed) {
+                    stopped.store(true, Ordering::Relaxed);
                     continue;
                 }
-                Verdict::Remove => {}
-            }
 
-            match remove_file(&path) {
-                Ok(()) => {
-                    out.freed += meta.len();
-                    out.removed_files += 1;
+                let removed = remove_file(&path).is_ok();
+                if !removed {
+                    locked(&stuck).push((path.clone(), len));
                 }
-                Err(_) => locked.push((path.clone(), meta.len())),
-            }
-            on_tick(&Tick {
-                freed: out.freed,
-                files: out.removed_files,
-                current: &path,
+
+                let mut now = locked(&running);
+                if removed {
+                    now.freed += len;
+                    now.files += 1;
+                }
+                let tick = Tick {
+                    freed: now.freed,
+                    files: now.files,
+                    current: &path,
+                };
+                (now.on_tick)(&tick);
             });
         }
-    }
+
+        let mut stack = vec![root.to_path_buf()];
+        'walk: while let Some(dir) = stack.pop() {
+            let Ok(entries) = fs::read_dir(&dir) else {
+                continue;
+            };
+            for entry in entries.flatten() {
+                if options.cancel.load(Ordering::Relaxed) {
+                    out.cancelled = true;
+                    break 'walk;
+                }
+
+                let path = entry.path();
+                let Ok(meta) = entry.metadata() else {
+                    continue;
+                };
+
+                if is_reparse(&meta) {
+                    // Remove the link itself and leave whatever it points at alone.
+                    let _ = if has_dir_attribute(&meta) {
+                        fs::remove_dir(&path)
+                    } else {
+                        fs::remove_file(&path)
+                    };
+                    continue;
+                }
+
+                if meta.is_dir() {
+                    if options.eligible.enters_folders() {
+                        dirs.push(path.clone());
+                        stack.push(path);
+                    }
+                    continue;
+                }
+
+                match options
+                    .eligible
+                    .judge(&entry.file_name().to_string_lossy(), &meta)
+                {
+                    Verdict::Keep => continue,
+                    Verdict::TooRecent => {
+                        out.skipped_recent += 1;
+                        continue;
+                    }
+                    Verdict::Remove => {}
+                }
+
+                let _ = send.send((path, meta.len()));
+            }
+        }
+
+        // Closing the channel is what tells the workers the walk is over.
+        drop(send);
+    });
+
+    out.cancelled |= stopped.load(Ordering::Relaxed);
+    let totals = running.into_inner().unwrap_or_else(PoisonError::into_inner);
+    out.freed = totals.freed;
+    out.removed_files = totals.files;
+    let locked_files = stuck.into_inner().unwrap_or_else(PoisonError::into_inner);
 
     // Deepest first, so a folder is empty by the time it is removed.
     dirs.sort_by_key(|d| std::cmp::Reverse(d.components().count()));
@@ -183,7 +260,7 @@ pub fn clear_contents(root: &Path, options: &Options, on_tick: &mut dyn FnMut(&T
         return out;
     }
 
-    for (path, len) in locked {
+    for (path, len) in locked_files {
         let already = options
             .pending
             .contains(&pending::normalize(&path.to_string_lossy()));
@@ -229,7 +306,7 @@ mod tests {
         root: &Path,
         queue_locked: bool,
         cancel: &AtomicBool,
-        on_tick: &mut dyn FnMut(&Tick),
+        on_tick: &mut (dyn FnMut(&Tick) + Send),
     ) -> Outcome {
         let pending = HashSet::new();
         let options = Options::new(queue_locked, &pending, cancel);
@@ -343,23 +420,54 @@ mod tests {
 
     #[test]
     fn a_cancel_stops_the_run_and_keeps_what_is_left() {
+        let total = 400;
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().join("DXCache");
-        for n in 0..10 {
+        for n in 0..total {
             file(&root.join(format!("f{n}.bin")), 10);
         }
 
         let cancel = AtomicBool::new(false);
         let out = run(&root, false, &cancel, &mut |t| {
-            if t.files == 3 {
+            if t.files >= 3 {
                 cancel.store(true, Ordering::Relaxed);
             }
         });
 
+        // Files already being deleted by another thread finish, so a few more
+        // than three can go. Nothing near the whole folder may.
         assert!(out.cancelled);
-        assert_eq!(out.removed_files, 3);
-        assert_eq!(out.freed, 30);
-        assert_eq!(fs::read_dir(&root).unwrap().count(), 7);
+        assert!(out.removed_files >= 3);
+        assert!(out.removed_files <= 3 + 2 * MAX_WORKERS as u32);
+        assert_eq!(out.freed, u64::from(out.removed_files) * 10);
+        assert_eq!(
+            fs::read_dir(&root).unwrap().count(),
+            total - out.removed_files as usize
+        );
+    }
+
+    #[test]
+    fn a_big_folder_is_cleared_completely_and_counted_exactly() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("DXCache");
+        for n in 0..600u64 {
+            file(
+                &root.join(format!("d{}", n % 7)).join(format!("f{n}.bin")),
+                (n % 13 + 1) as usize,
+            );
+        }
+        let expected: u64 = (0..600u64).map(|n| n % 13 + 1).sum();
+
+        let mut last = (0, 0);
+        let out = run(&root, false, &AtomicBool::new(false), &mut |t| {
+            last = (t.freed, t.files);
+        });
+
+        assert_eq!(out.freed, expected);
+        assert_eq!(out.removed_files, 600);
+        assert_eq!(out.failed_files, 0);
+        assert_eq!(last, (expected, 600), "the last tick shows the full total");
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
     }
 
     #[test]

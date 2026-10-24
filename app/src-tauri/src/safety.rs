@@ -193,6 +193,7 @@ mod tests {
             r"C:\Users\a\AppData\Local\AMD\DxcCache",
             r"C:\Users\a\AppData\Local\D3DSCache",
             r"C:\Users\a\AppData\LocalLow\Intel\ShaderCache",
+            r"C:\Users\a\AppData\Local\Intel\ShaderCache",
             r"C:\Program Files (x86)\Steam\steamapps\shadercache",
             r"C:\AMD",
             r"C:\NVIDIA\DisplayDriver",

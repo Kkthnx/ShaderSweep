@@ -236,7 +236,7 @@ pub fn clean(
     ids: &[String],
     preview: bool,
     queue_locked: bool,
-    progress: impl FnMut(Progress),
+    progress: impl FnMut(Progress) + Send,
 ) -> Result<CleanResult, String> {
     CANCEL.store(false, Ordering::Relaxed);
 
@@ -284,7 +284,7 @@ pub fn clean_with(
     preview: bool,
     queue_locked: bool,
     cancel: &AtomicBool,
-    mut progress: impl FnMut(Progress),
+    mut progress: impl FnMut(Progress) + Send,
 ) -> Result<Run, String> {
     // Resolve every id before touching anything, so one typo cannot leave a
     // run half finished.
@@ -388,7 +388,7 @@ fn clean_folders(
     preview: bool,
     queue_locked: bool,
     cancel: &AtomicBool,
-    progress: &mut impl FnMut(Progress),
+    progress: &mut (impl FnMut(Progress) + Send),
 ) -> Outcome {
     let id = provider.id;
     let mut outcome = Outcome::default();

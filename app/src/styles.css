@@ -1048,3 +1048,24 @@ button {
   padding: 0 18px;
   font-size: 14px;
 }
+
+.primary.danger {
+  background: var(--danger);
+  color: #1c0606;
+}
+
+.primary.danger:hover:not(:disabled) {
+  background: #fca5a5;
+}
+
+/* ---- quick picks above the list ---- */
+
+.picks {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 14px;
+  padding: 0 0 8px;
+  color: var(--faint);
+  font-size: 12.5px;
+}

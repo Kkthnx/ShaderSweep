@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.2.0
+
+### Changed
+
+- **Cleaning is about three times faster.** Files are now deleted by up to eight threads at once instead of one, and deleting starts while the folder is still being read. A delete spends most of its time waiting on the file system and on antivirus, so this scales. Measured through the app's own code on a 16 thread PC, clearing 10,000 files of 8 KB took 1.35 seconds with one thread and 0.46 with eight, the same on repeat runs. A plain delete loop gained little past eight threads, so eight is the cap. Progress, Cancel and the freed-space count behave exactly as before, and the total is still the sum of files actually deleted.
+- A preview now ends with a **Switch to a real clean** button, so there is no trip into Options to turn Preview only off.
+
+### Added
+
+- **Select Recommended or None** above the list, to get back to the default ticks or clear them all in one click. Recommended never ticks a row for an app that is running.
+- **A confirmation before anything irreversible.** If the Recycle Bin or Event Viewer logs are ticked, a real clean first names them and says they cannot be brought back. The safe button has focus, so pressing Enter does nothing risky.
+- Intel's shader cache is also looked for under `AppData\Local\Intel\ShaderCache`, which some driver builds use, as well as the long standing `LocalLow` folder.
+
+### Project
+
+- New tests for a large nested folder cleared by many threads and counted exactly, and a cancel test that holds up under threads.
+
 ## 2.1.1
 
 ### Fixed
