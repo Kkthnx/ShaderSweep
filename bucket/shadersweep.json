@@ -1,13 +1,13 @@
 {
-    "version": "2.1.1",
+    "version": "2.2.0",
     "description": "Clear GPU, Windows and game launcher caches in one click, and find out when a new driver makes it worth doing.",
     "homepage": "https://github.com/Kkthnx/ShaderSweep",
     "license": "MIT",
     "notes": "ShaderSweep asks for administrator rights when it starts. Open it from the Start menu. A terminal shim needs an elevated terminal, for example: ShaderSweep --clean --preview",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Kkthnx/ShaderSweep/releases/download/2.1.1/ShaderSweep-2.1.1.exe#/ShaderSweep.exe",
-            "hash": "C29054EBF44CA2DB2079760C8B66652F877351BB3553945116F65A16A6A04103"
+            "url": "https://github.com/Kkthnx/ShaderSweep/releases/download/2.2.0/ShaderSweep-2.2.0.exe#/ShaderSweep.exe",
+            "hash": "C234A6A1383FF149061506FF1440E2E81FB59D040FA85E68EDA35F0E9529C241"
         }
     },
     "bin": "ShaderSweep.exe",
