@@ -8,9 +8,9 @@
 A small Windows app that clears GPU shader caches and the clutter that builds up around them. It scans first, shows you every folder it found with its size, and deletes only what you leave ticked.
 
 <p align="center">
-  <img src="assets/shadersweep-ready.png" alt="ShaderSweep listing the caches it found" width="290" />
-  <img src="assets/shadersweep-launchers.png" alt="The game launcher and Windows housekeeping rows, each with its size" width="290" />
-  <img src="assets/shadersweep-done.png" alt="ShaderSweep after a clean, showing the space freed" width="290" />
+  <img src="assets/shadersweep-ready.png?v=2.3.0" alt="ShaderSweep listing the caches it found" width="290" />
+  <img src="assets/shadersweep-launchers.png?v=2.3.0" alt="The game launcher and Windows housekeeping rows, each with its size" width="290" />
+  <img src="assets/shadersweep-done.png?v=2.3.0" alt="ShaderSweep after a clean, showing the space freed" width="290" />
 </p>
 
 ## When it is worth running
