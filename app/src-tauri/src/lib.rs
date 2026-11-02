@@ -16,6 +16,8 @@ mod safety;
 mod state;
 mod steam;
 mod system;
+#[cfg(test)]
+mod testmem;
 
 use tauri::{AppHandle, Emitter};
 

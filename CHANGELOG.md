@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **A big clean no longer piles up in memory.** The walker that finds files is far faster than the threads that delete them, and it used to queue every path it found. Clearing 200,000 files peaked at 43 MB. The queue now holds at most 1,024 paths, and the same run peaks at 8.2 MB with no change in speed (about 19,500 files a second either way).
+- Notes that are only good to know, such as running apps or a pending restart, fold down to one line, so the list of caches stays on screen. Anything that needs attention stays in full.
+- The window redraws only what changed and keeps keyboard focus on the same control, and progress is drawn once per frame.
+- The timer behind the elapsed time and the restart countdown now runs only while one of them is showing, so an idle window does no work.
+- Links in the footer and in Options have icons.
+
+### Checked
+
+- No leaks. 400 scans in a row held steady at about 3.5 MB and 250 handles. Filling and clearing a folder 30 times held at about 1.6 MB and 161 handles. 60 clean and scan cycles in the window left the DOM at the same 580 nodes.
+- The real app at idle is the 3.2 MB exe plus six WebView2 processes, about 190 MB of committed memory in all and under 1% of one core.
+
+### Project
+
+- `main.ts` is split into state, dom, render, actions and one file per view. `providers.rs` is split into gpu, launchers and housekeeping modules.
+- Three ignored benchmark tests, `bench_clear`, `bench_scan` and `bench_repeat`, print time, peak memory and handle counts. Run them with `cargo test --release bench_ -- --ignored --nocapture`.
+
 ## 2.2.0
 
 ### Changed

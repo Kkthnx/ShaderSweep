@@ -114,6 +114,11 @@ fn remove_file(path: &Path) -> std::io::Result<()> {
 /// little (8 threads 6,682 files/s, 16 threads 7,658), so 8 is the cap.
 const MAX_WORKERS: usize = 8;
 
+/// Files waiting for a deleting thread. Walking is far faster than deleting, so
+/// without a limit the whole folder piles up here. Measured on 200,000 files,
+/// the unbounded queue pushed the peak up by 34 MB.
+const QUEUE_DEPTH: usize = 1024;
+
 fn workers() -> usize {
     thread::available_parallelism()
         .map_or(4, |n| n.get())
@@ -154,7 +159,7 @@ pub fn clear_contents(
     });
     let stuck: Mutex<Vec<(PathBuf, u64)>> = Mutex::new(Vec::new());
     let stopped = AtomicBool::new(false);
-    let (send, receive) = mpsc::channel::<(PathBuf, u64)>();
+    let (send, receive) = mpsc::sync_channel::<(PathBuf, u64)>(QUEUE_DEPTH);
     let receive = Mutex::new(receive);
 
     thread::scope(|scope| {
@@ -587,5 +592,74 @@ mod tests {
     fn missing_folder_is_a_no_op() {
         let out = quiet(Path::new(r"Z:\no\such\folder"));
         assert_eq!(out, Outcome::default());
+    }
+
+    /// Run by hand with `cargo test --release bench_clear -- --ignored --nocapture`.
+    /// Set BENCH_FILES to change the size. Prints time and peak memory.
+    #[test]
+    #[ignore]
+    fn bench_clear() {
+        let files: u64 = std::env::var("BENCH_FILES")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(100_000);
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("DXCache");
+        let made = std::time::Instant::now();
+        for n in 0..files {
+            let sub = root.join(format!("d{}", n % 64));
+            if n < 64 {
+                fs::create_dir_all(&sub).unwrap();
+            }
+            fs::File::create(sub.join(format!("shader_{n}.bin")))
+                .unwrap()
+                .write_all(&[1u8; 64])
+                .unwrap();
+        }
+        println!("created {files} files in {:.2?}", made.elapsed());
+        let before = crate::testmem::read().peak_mb;
+
+        let scanned = std::time::Instant::now();
+        let size = crate::fsutil::dir_size(&root);
+        println!("scan {:?} in {:.2?}", size, scanned.elapsed());
+
+        let cleared = std::time::Instant::now();
+        let out = quiet(&root);
+        let took = cleared.elapsed();
+        println!(
+            "clear removed {} in {:.2?} ({:.0} files/s), peak {:.1} MB (was {:.1} MB before the clear)",
+            out.removed_files,
+            took,
+            f64::from(out.removed_files) / took.as_secs_f64(),
+            crate::testmem::read().peak_mb,
+            before
+        );
+    }
+
+    /// Run by hand with `cargo test --release bench_repeat -- --ignored --nocapture`.
+    /// Fills and clears a folder over and over. Private memory and handles
+    /// should level off, and a leak shows as either one climbing.
+    #[test]
+    #[ignore]
+    fn bench_repeat() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("DXCache");
+        for round in 1..=30 {
+            for n in 0..3000u64 {
+                file(
+                    &root.join(format!("d{}", n % 16)).join(format!("f{n}.bin")),
+                    32,
+                );
+            }
+            let out = quiet(&root);
+            assert_eq!(out.removed_files, 3000);
+            if round == 1 || round % 5 == 0 {
+                let mem = crate::testmem::read();
+                println!(
+                    "round {round:2}: private {:.1} MB, peak {:.1} MB, {} handles",
+                    mem.private_mb, mem.peak_mb, mem.handles
+                );
+            }
+        }
     }
 }

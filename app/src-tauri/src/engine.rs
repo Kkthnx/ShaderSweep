@@ -1003,4 +1003,30 @@ mod tests {
         );
         assert!(!before.queue_check.unwrap().restarted);
     }
+
+    /// Run by hand with `cargo test --release bench_scan -- --ignored --nocapture`.
+    /// Scans this machine again and again. A leak shows as private memory
+    /// that keeps climbing from one pass to the next.
+    #[test]
+    #[ignore]
+    fn bench_scan() {
+        let passes: u32 = std::env::var("BENCH_PASSES")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(12);
+        for pass in 1..=passes {
+            let started = Instant::now();
+            let result = scan(&no_steps());
+            let mem = crate::testmem::read();
+            println!(
+                "pass {pass:2}: {:>7.1?}, {} rows, {} MB found, private {:.1} MB, peak {:.1} MB, {} handles",
+                started.elapsed(),
+                result.providers.len(),
+                result.providers.iter().map(|p| p.bytes).sum::<u64>() / (1024 * 1024),
+                mem.private_mb,
+                mem.peak_mb,
+                mem.handles
+            );
+        }
+    }
 }

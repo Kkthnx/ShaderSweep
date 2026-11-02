@@ -1,3 +1,4 @@
+import { syncClock } from "./clock";
 import { renderDock } from "./views/dock";
 import { renderGpu } from "./views/gpu";
 import { renderList } from "./views/list";
@@ -10,4 +11,5 @@ export function render(): void {
   renderSummary();
   renderList();
   renderDock();
+  syncClock();
 }
