@@ -1179,3 +1179,9 @@ button {
   color: var(--faint);
   font-size: 12.5px;
 }
+
+.caption.drive {
+  margin-top: 2px;
+  color: var(--faint);
+  font-size: 12.5px;
+}

@@ -10,6 +10,11 @@
 - The timer behind the elapsed time and the restart countdown now runs only while one of them is showing, so an idle window does no work.
 - Links in the footer and in Options have icons.
 
+### Added
+
+- After a real clean, the result shows the free space on your system drive before and after, for example `C: free space 174.70 GB to 184.56 GB`. It appears once the rescan reads the drive, and only if the drive really gained space.
+- F5 and Ctrl+R scan again. Before, they reloaded the page and wiped the result on screen.
+
 ### Checked
 
 - No leaks. 400 scans in a row held steady at about 3.5 MB and 250 handles. Filling and clearing a folder 30 times held at about 1.6 MB and 161 handles. 60 clean and scan cycles in the window left the DOM at the same 580 nodes.

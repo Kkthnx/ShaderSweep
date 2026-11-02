@@ -54,6 +54,7 @@ export async function runClean(): Promise<void> {
   state.activity = [];
   state.result = null;
   state.cancelling = false;
+  state.diskBefore = state.scan?.disk?.free ?? null;
   state.settled = null;
   state.startedAt = Date.now();
   state.now = state.startedAt;

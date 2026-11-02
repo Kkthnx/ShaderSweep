@@ -14,6 +14,7 @@ import { icons } from "./icons";
 import { render } from "./render";
 import {
   ACTIVITY_LINES,
+  busy,
   defaultSelection,
   RESTART_SECONDS,
   state,
@@ -198,6 +199,15 @@ void onScanStep((step) => {
 window.addEventListener("scroll", () => {
   const page = document.scrollingElement;
   if (page && (page.scrollTop !== 0 || page.scrollLeft !== 0)) page.scrollTo(0, 0);
+});
+
+// F5 and Ctrl+R scan again instead of reloading the page, which would wipe the
+// result on screen.
+document.addEventListener("keydown", (event) => {
+  const reload = event.key === "F5" || (event.ctrlKey && event.key.toLowerCase() === "r");
+  if (!reload) return;
+  event.preventDefault();
+  if (!event.repeat && !busy()) void runScan();
 });
 
 if (!import.meta.env.DEV) {

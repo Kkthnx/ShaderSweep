@@ -55,11 +55,21 @@ export function renderSummary(): void {
       ? `Across ${plural(r.providers.length, "cache type")}`
       : `${plural(removed, "file")} removed`;
     const eyebrow = r.cancelled ? "Freed before you stopped" : r.preview ? "Would free" : "Freed";
+
+    // The rescan after a clean brings the new free space. Until it lands, or if
+    // something else filled the drive meanwhile, there is nothing honest to show.
+    const disk = state.scan?.disk;
+    const before = state.diskBefore;
+    const drive =
+      !r.preview && disk && before !== null && disk.free > before
+        ? `<div class="caption drive"><span>${escapeHtml(disk.drive)} free space ${formatBytes(before)} to ${formatBytes(disk.free)}</span></div>`
+        : "";
+
     setHtml(
       el.summary,
       `<div class="eyebrow">${eyebrow}</div>
       <div class="figure is-done">${formatBytes(r.freed)}</div>
-      <div class="caption"><span>${escapeHtml(caption)}</span>${copy}</div>`,
+      <div class="caption"><span>${escapeHtml(caption)}</span>${copy}</div>${drive}`,
     );
     return;
   }

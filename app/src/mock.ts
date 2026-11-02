@@ -90,6 +90,9 @@ export async function mockOnScanStep(handler: (s: ScanStep) => void): Promise<()
   };
 }
 
+/** Space a mock clean has given back, so the next scan shows more free. */
+let reclaimed = 0;
+
 export async function mockScan(): Promise<ScanResult> {
   const list = SEEDS.map((s) => s.label);
   for (let i = 0; i < list.length; i++) {
@@ -100,7 +103,7 @@ export async function mockScan(): Promise<ScanResult> {
   const settled = mode === "settled";
   return {
     isAdmin: true,
-    disk: { drive: "C:", free: 214.3 * GB, total: 930.5 * GB },
+    disk: { drive: "C:", free: 214.3 * GB + reclaimed, total: 930.5 * GB },
     pendingRestart: mode === "pending" ? 6 : 0,
     queueCheck: settled
       ? { restarted: true, removed: 10, removedBytes: 34.2 * MB, remaining: 0, remainingBytes: 0 }
@@ -188,6 +191,8 @@ export async function mockClean(ids: string[], preview: boolean): Promise<CleanR
       holders: [] as string[],
     });
   }
+
+  if (!preview) reclaimed += freed;
 
   return {
     preview,
