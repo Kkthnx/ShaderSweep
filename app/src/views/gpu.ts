@@ -27,9 +27,13 @@ export function renderGpu(): void {
 
   const last =
     data.lastCleanAt === null ? "Never cleaned" : `Last cleaned ${timeAgo(data.lastCleanAt)}`;
-  const disk = data.disk
-    ? `<span>${escapeHtml(data.disk.drive)} ${formatBytes(data.disk.free)} free of ${formatBytes(data.disk.total)}</span>`
-    : "";
+  // One line per drive that holds a cache, so a game library on D: is not hidden.
+  const disk = data.disks
+    .map(
+      (d) =>
+        `<span>${escapeHtml(d.drive)} ${formatBytes(d.free)} free of ${formatBytes(d.total)}</span>`,
+    )
+    .join("");
   const total =
     data.totalFreed > 0 ? `<span>${formatBytes(data.totalFreed)} freed so far</span>` : "";
   setHtml(el.gpu, `${rows}<div class="gpu-last"><span>${last}</span>${disk}${total}</div>`);

@@ -69,7 +69,8 @@ pub struct QueueCheck {
 #[serde(rename_all = "camelCase")]
 pub struct ScanResult {
     pub is_admin: bool,
-    pub disk: Option<DiskInfo>,
+    /// The system drive first, then every other drive that holds a cache.
+    pub disks: Vec<DiskInfo>,
     /// Files from an earlier clean that are still waiting for a restart.
     pub pending_restart: u32,
     pub queue_check: Option<QueueCheck>,

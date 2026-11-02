@@ -40,8 +40,8 @@ export const state = {
   preview: false,
   queue: true,
   copied: false,
-  /** Free space on the system drive when the clean began, to show the change. */
-  diskBefore: null as number | null,
+  /** Free space per drive when the clean began, to show the change. */
+  disksBefore: new Map<string, number>(),
   /** What the last restart did to the queued files, kept until dismissed. */
   settled: null as QueueCheck | null,
   restart: null as RestartState,

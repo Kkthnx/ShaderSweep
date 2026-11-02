@@ -58,12 +58,15 @@ export function renderSummary(): void {
 
     // The rescan after a clean brings the new free space. Until it lands, or if
     // something else filled the drive meanwhile, there is nothing honest to show.
-    const disk = state.scan?.disk;
-    const before = state.diskBefore;
-    const drive =
-      !r.preview && disk && before !== null && disk.free > before
-        ? `<div class="caption drive"><span>${escapeHtml(disk.drive)} free space ${formatBytes(before)} to ${formatBytes(disk.free)}</span></div>`
-        : "";
+    const drive = r.preview
+      ? ""
+      : (state.scan?.disks ?? [])
+          .filter((d) => d.free > (state.disksBefore.get(d.drive) ?? Infinity))
+          .map(
+            (d) =>
+              `<div class="caption drive"><span>${escapeHtml(d.drive)} ${formatBytes(d.free - (state.disksBefore.get(d.drive) ?? d.free))} more free, now ${formatBytes(d.free)}</span></div>`,
+          )
+          .join("");
 
     setHtml(
       el.summary,

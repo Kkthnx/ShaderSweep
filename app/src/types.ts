@@ -51,7 +51,8 @@ export interface QueueCheck {
 
 export interface ScanResult {
   isAdmin: boolean;
-  disk: DiskInfo | null;
+  /** The system drive first, then every other drive that holds a cache. */
+  disks: DiskInfo[];
   pendingRestart: number;
   queueCheck: QueueCheck | null;
   adapters: Adapter[];

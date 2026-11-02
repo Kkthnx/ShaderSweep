@@ -1,7 +1,7 @@
 //! Ties the pieces together: scan what exists, then clean what was chosen.
 
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf, Prefix};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::thread;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -188,19 +188,21 @@ pub fn scan_with(
         .as_ref()
         .and_then(|l| state::check_queue(l, live.boot_secs, |p| Path::new(p).exists()));
 
-    let disk = native::disk_space(&ctx.system_drive).map(|d| DiskInfo {
-        drive: ctx
-            .system_drive
-            .to_string_lossy()
-            .trim_end_matches('\\')
-            .to_string(),
-        free: d.free,
-        total: d.total,
-    });
+    let disks = drives_in_use(&ctx.system_drive, &folders)
+        .into_iter()
+        .filter_map(|root| {
+            let space = native::disk_space(&root)?;
+            Some(DiskInfo {
+                drive: root.to_string_lossy().trim_end_matches('\\').to_string(),
+                free: space.free,
+                total: space.total,
+            })
+        })
+        .collect();
 
     ScanResult {
         is_admin: native::is_admin(),
-        disk,
+        disks,
         pending_restart,
         queue_check,
         adapters,
@@ -209,6 +211,35 @@ pub fn scan_with(
         total_freed: last.map_or(0, |l| l.total_freed),
         driver_changes,
     }
+}
+
+/// The drive root a path sits on, such as `D:\`. A network share has no drive
+/// letter, so it gives none.
+fn drive_root(path: &Path) -> Option<PathBuf> {
+    match path.components().next()? {
+        Component::Prefix(prefix) => match prefix.kind() {
+            Prefix::Disk(letter) | Prefix::VerbatimDisk(letter) => Some(PathBuf::from(format!(
+                "{}:\\",
+                letter.to_ascii_uppercase() as char
+            ))),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// Every drive a clean can give space back on. A game library or a moved
+/// cache can sit on a second drive, so the system drive alone would hide the
+/// space those return. The system drive comes first and the rest follow in
+/// letter order.
+fn drives_in_use(system_drive: &Path, folders: &[PathBuf]) -> Vec<PathBuf> {
+    let mut roots: Vec<PathBuf> = folders.iter().filter_map(|f| drive_root(f)).collect();
+    roots.sort();
+    roots.dedup();
+    let system = drive_root(system_drive).unwrap_or_else(|| system_drive.to_path_buf());
+    roots.retain(|r| *r != system);
+    roots.insert(0, system);
+    roots
 }
 
 /// True only for a folder a provider resolves to right now. This is what lets
@@ -1002,6 +1033,46 @@ mod tests {
             &no_steps(),
         );
         assert!(!before.queue_check.unwrap().restarted);
+    }
+
+    #[test]
+    fn a_path_names_its_drive() {
+        assert_eq!(
+            drive_root(Path::new(r"d:\SteamLibrary\steamapps\shadercache")),
+            Some(PathBuf::from(r"D:\"))
+        );
+        assert_eq!(drive_root(Path::new(r"\\server\share\cache")), None);
+        assert_eq!(drive_root(Path::new(r"relative\cache")), None);
+    }
+
+    #[test]
+    fn every_drive_with_a_cache_is_listed_system_drive_first() {
+        let folders = vec![
+            PathBuf::from(r"E:\Games\World of Warcraft\_retail_\Cache"),
+            PathBuf::from(r"D:\SteamLibrary\steamapps\shadercache"),
+            PathBuf::from(r"D:\SteamLibrary2\steamapps\shadercache"),
+            PathBuf::from(r"C:\Users\Me\AppData\Local\NVIDIA\DXCache"),
+        ];
+        let drives = drives_in_use(Path::new(r"C:\"), &folders);
+        assert_eq!(
+            drives,
+            vec![
+                PathBuf::from(r"C:\"),
+                PathBuf::from(r"D:\"),
+                PathBuf::from(r"E:\")
+            ]
+        );
+    }
+
+    #[test]
+    fn the_system_drive_is_listed_even_with_nothing_found_on_it() {
+        let folders = vec![PathBuf::from(r"D:\SteamLibrary\steamapps\shadercache")];
+        let system = Path::new(r"C:\");
+        assert_eq!(
+            drives_in_use(system, &folders),
+            vec![PathBuf::from(r"C:\"), PathBuf::from(r"D:\")]
+        );
+        assert_eq!(drives_in_use(system, &[]), vec![PathBuf::from(r"C:\")]);
     }
 
     /// Run by hand with `cargo test --release bench_scan -- --ignored --nocapture`.
