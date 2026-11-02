@@ -9,7 +9,7 @@ A small Windows app that clears GPU shader caches and the clutter that builds up
 
 <p align="center">
   <img src="assets/shadersweep-ready.png" alt="ShaderSweep listing the caches it found" width="290" />
-  <img src="assets/shadersweep-launchers.png" alt="The game launcher caches, each with its size" width="290" />
+  <img src="assets/shadersweep-launchers.png" alt="The game launcher and Windows housekeeping rows, each with its size" width="290" />
   <img src="assets/shadersweep-done.png" alt="ShaderSweep after a clean, showing the space freed" width="290" />
 </p>
 
@@ -60,9 +60,9 @@ The exe is not code signed yet, so SmartScreen may warn you the first time. The 
 ## Quick start
 
 1. Run ShaderSweep. It asks for administrator rights, since some caches belong to system accounts.
-2. Wait for the scan. Each row shows its size, and the arrow next to it lists the exact folders.
+2. Wait for the scan. Each row shows its size, and the arrow next to it lists the exact folders. The header shows free space for every drive that holds a cache, and F5 scans again.
 3. Untick anything you want to keep. Select Recommended puts the default ticks back.
-4. Press Clean, or turn on Preview only in Options first to see what would go.
+4. Press Clean, or turn on Preview only in Options first to see what would go. When it finishes, the result says how much space each drive gained.
 5. If files are waiting for a restart, the app offers one with a 60 second countdown you can cancel.
 
 ## Command line
