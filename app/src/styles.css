@@ -933,13 +933,82 @@ button {
   background: var(--panel);
 }
 
+/* A notice that is only good to know folds down to one line. */
+
+.notice.is-compact {
+  display: block;
+  padding: 0;
+}
+
+.notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.notice-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 6px 9px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notice-toggle strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-toggle .notice-icon {
+  margin-top: 0;
+  line-height: 0;
+}
+
+.notice-chevron {
+  flex: none;
+  color: var(--faint);
+  line-height: 0;
+  transition: transform 0.15s;
+}
+
+.notice-toggle[aria-expanded="true"] .notice-chevron {
+  transform: rotate(90deg);
+}
+
+.notice.is-compact .notice-action {
+  flex: none;
+  margin-top: 0;
+  padding: 4px 10px;
+}
+
+.notice-more {
+  margin: 0;
+  padding: 0 14px 12px 42px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice-chevron {
+    transition: none;
+  }
+}
+
 /* ---- credit and links ---- */
 
 .credit {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  padding: 18px 0 20px;
+  gap: 4px 6px;
+  padding: 14px 0 18px;
   color: var(--faint);
   font-size: 12.5px;
 }
@@ -964,9 +1033,50 @@ button {
 .links {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 10px;
   font-size: 12.5px;
+}
+
+/* An icon and a label. Quiet until you point at it. */
+.linkbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.linkbtn svg {
+  flex: none;
+  opacity: 0.85;
+}
+
+.linkbtn:hover {
+  border-color: var(--line-strong);
+  background: var(--panel);
+  color: var(--accent-hover);
+}
+
+.links .linkbtn {
+  border-color: var(--line);
+  background: var(--panel);
+}
+
+.credit .linkbtn:first-child {
+  margin-left: -8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linkbtn {
+    transition: none;
+  }
 }
 
 /* ---- restart dialog ---- */
