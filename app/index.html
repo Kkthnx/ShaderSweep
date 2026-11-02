@@ -7,6 +7,10 @@
     <title>ShaderSweep</title>
   </head>
   <body>
+    <!-- The one place a screen reader hears about results. The number on screen
+         changes many times a second while cleaning, so it is not a live region. -->
+    <div class="sr-only" id="announce" role="status"></div>
+
     <main class="shell">
       <header class="top">
         <div class="brand" id="brand"></div>
@@ -15,8 +19,8 @@
 
       <div class="scroll">
         <section class="gpu" id="gpu" aria-label="Graphics driver"></section>
-        <section id="notice" aria-live="polite"></section>
-        <section class="summary" id="summary" aria-live="polite"></section>
+        <section id="notice" aria-label="Notes"></section>
+        <section class="summary" id="summary" aria-label="Result"></section>
         <section class="list" id="list" aria-label="What to clean"></section>
         <footer class="credit" id="credit"></footer>
       </div>

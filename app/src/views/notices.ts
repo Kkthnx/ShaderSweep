@@ -196,7 +196,9 @@ export function renderNotice(): void {
       const action = n.action
         ? `<button class="notice-action" type="button" data-action="${n.action.id}">${escapeHtml(n.action.label)}</button>`
         : "";
-      const role = n.kind === "error" ? "alert" : "status";
+      // Only an error interrupts. A countdown changes every second, so it is a
+      // timer, which a screen reader does not read out as it ticks.
+      const role = n.kind === "error" ? "alert" : n.key === "countdown" ? "timer" : "group";
 
       if (n.sticky) {
         return `<div class="notice notice-${n.kind}" role="${role}">

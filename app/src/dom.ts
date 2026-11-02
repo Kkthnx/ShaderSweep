@@ -18,7 +18,17 @@ export const el = {
   confirm: $<HTMLButtonElement>("restart-confirm"),
   sure: $<HTMLDialogElement>("confirm-dialog"),
   sureList: $("confirm-list"),
+  announce: $("announce"),
 };
+
+/** Says something to a screen reader once. Clearing first makes the same
+ *  sentence read again if it is repeated. */
+export function announce(text: string): void {
+  el.announce.textContent = "";
+  window.setTimeout(() => {
+    el.announce.textContent = text;
+  }, 60);
+}
 
 
 const lastHtml = new WeakMap<HTMLElement, string>();

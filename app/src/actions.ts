@@ -1,6 +1,6 @@
 import { cancelClean, cancelRestart, clean, restartPc, scan } from "./bridge";
-import { el } from "./dom";
-import { escapeHtml, formatBytes } from "./format";
+import { announce, el } from "./dom";
+import { escapeHtml, formatBytes, plural } from "./format";
 import { render } from "./render";
 import { chosen, defaultSelection, IRREVERSIBLE, RESTART_SECONDS, state } from "./state";
 import { renderDock } from "./views/dock";
@@ -27,6 +27,14 @@ export async function runScan(): Promise<void> {
     state.selected = defaultSelection(data);
     state.phase = "ready";
     render();
+
+    const picked = chosen();
+    const bytes = picked.reduce((n, p) => n + p.bytes, 0);
+    announce(
+      bytes > 0
+        ? `Scan finished. ${formatBytes(bytes)} ready to clear in ${plural(picked.length, "cache type")}.`
+        : "Scan finished. Your caches are already empty.",
+    );
   } catch (error) {
     fail(error);
   }
@@ -64,6 +72,16 @@ export async function runClean(): Promise<void> {
     state.result = await clean(ids, state.preview, state.queue);
     state.phase = "done";
     render();
+
+    const result = state.result;
+    const amount = formatBytes(result.freed);
+    announce(
+      result.cancelled
+        ? `Stopped. ${amount} freed before you stopped.`
+        : result.preview
+          ? `Preview finished. ${amount} would be freed.`
+          : `Clean finished. ${amount} freed.`,
+    );
     // Bring the headline number back into view.
     el.scroll.scrollTo({ top: 0 });
 
