@@ -1197,3 +1197,18 @@ button {
   white-space: nowrap;
   border: 0;
 }
+
+.disk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.disk svg {
+  flex: none;
+  opacity: 0.75;
+}
+
+.disk.is-low {
+  color: var(--warn);
+}

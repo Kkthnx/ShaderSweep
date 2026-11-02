@@ -1,5 +1,5 @@
 // Sample data for previewing the interface in a browser. Development only.
-// Add ?s=changed, empty, old, pending, settled, stuck, running or fast to the
+// Add ?s=changed, empty, old, pending, settled, stuck, running, full or fast to the
 // address to see other states.
 import type {
   CleanResult,
@@ -104,7 +104,7 @@ export async function mockScan(): Promise<ScanResult> {
   return {
     isAdmin: true,
     disks: [
-      { drive: "C:", free: 214.3 * GB + reclaimed * 0.7, total: 930.5 * GB },
+      { drive: "C:", free: (mode === "full" ? 41 : 214.3) * GB + reclaimed * 0.7, total: 930.5 * GB },
       { drive: "D:", free: 1.42 * 1024 * GB + reclaimed * 0.3, total: 1.82 * 1024 * GB },
     ],
     pendingRestart: mode === "pending" ? 6 : 0,

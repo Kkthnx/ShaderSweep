@@ -1,5 +1,6 @@
 import { el, setHtml } from "../dom";
 import { escapeHtml, formatBytes, formatDate, timeAgo } from "../format";
+import { icons } from "../icons";
 import { state } from "../state";
 
 export function renderGpu(): void {
@@ -29,10 +30,11 @@ export function renderGpu(): void {
     data.lastCleanAt === null ? "Never cleaned" : `Last cleaned ${timeAgo(data.lastCleanAt)}`;
   // One line per drive that holds a cache, so a game library on D: is not hidden.
   const disk = data.disks
-    .map(
-      (d) =>
-        `<span>${escapeHtml(d.drive)} ${formatBytes(d.free)} free of ${formatBytes(d.total)}</span>`,
-    )
+    .map((d) => {
+      // Under a tenth free is when a clean matters most, so it stands out.
+      const low = d.total > 0 && d.free / d.total < 0.1 ? " is-low" : "";
+      return `<span class="disk${low}">${icons.drive}${escapeHtml(d.drive)} ${formatBytes(d.free)} free of ${formatBytes(d.total)}</span>`;
+    })
     .join("");
   const total =
     data.totalFreed > 0 ? `<span>${formatBytes(data.totalFreed)} freed so far</span>` : "";

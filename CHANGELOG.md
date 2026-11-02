@@ -8,7 +8,7 @@
 - Notes that are only good to know, such as running apps or a pending restart, fold down to one line, so the list of caches stays on screen. Anything that needs attention stays in full.
 - The window redraws only what changed and keeps keyboard focus on the same control, and progress is drawn once per frame.
 - The timer behind the elapsed time and the restart countdown now runs only while one of them is showing, so an idle window does no work.
-- Links in the footer and in Options have icons.
+- Links in the footer and in Options have icons, and so do the drive lines. A drive with under a tenth of its space free is tinted amber.
 
 ### Added
 

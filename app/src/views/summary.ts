@@ -1,5 +1,6 @@
 import { el, setHtml } from "../dom";
 import { escapeHtml, formatBytes, formatDuration, plural } from "../format";
+import { icons } from "../icons";
 import { chosen, expectedBytes, shortPath, state } from "../state";
 
 export function renderSummary(): void {
@@ -64,7 +65,7 @@ export function renderSummary(): void {
           .filter((d) => d.free > (state.disksBefore.get(d.drive) ?? Infinity))
           .map(
             (d) =>
-              `<div class="caption drive"><span>${escapeHtml(d.drive)} ${formatBytes(d.free - (state.disksBefore.get(d.drive) ?? d.free))} more free, now ${formatBytes(d.free)}</span></div>`,
+              `<div class="caption drive"><span class="disk">${icons.drive}${escapeHtml(d.drive)}${formatBytes(d.free - (state.disksBefore.get(d.drive) ?? d.free))} more free, now ${formatBytes(d.free)}</span></div>`,
           )
           .join("");
 
