@@ -7,6 +7,7 @@ use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
 
 use windows_sys::Win32::Foundation::{CloseHandle, ERROR_NO_MORE_ITEMS, INVALID_HANDLE_VALUE};
+use windows_sys::Win32::Storage::FileSystem::{GetDriveTypeW, GetLogicalDrives};
 use windows_sys::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, Process32FirstW, Process32NextW, PROCESSENTRY32W, TH32CS_SNAPPROCESS,
 };
@@ -72,14 +73,25 @@ pub struct RecycleBin {
 
 /// Size of the Recycle Bin across every drive.
 pub fn recycle_bin() -> RecycleBin {
+    query_recycle_bin(None)
+}
+
+/// The Recycle Bin on one drive, such as `D:\`, or on every drive for none.
+fn query_recycle_bin(root: Option<&Path>) -> RecycleBin {
     let mut info = SHQUERYRBINFO {
         cbSize: std::mem::size_of::<SHQUERYRBINFO>() as u32,
         i64Size: 0,
         i64NumItems: 0,
     };
-    // SAFETY: a null root means every drive, and `info` is a valid record
-    // with `cbSize` set, as the API requires.
-    let hr = unsafe { SHQueryRecycleBinW(std::ptr::null(), &mut info) };
+    let root = root.map(|r| wide(r.as_os_str()));
+    // SAFETY: a null root means every drive, a given one is nul terminated and
+    // outlives the call, and `info` is a valid record with `cbSize` set.
+    let hr = unsafe {
+        SHQueryRecycleBinW(
+            root.as_ref().map_or(std::ptr::null(), |r| r.as_ptr()),
+            &mut info,
+        )
+    };
     if hr != 0 {
         return RecycleBin::default();
     }
@@ -87,6 +99,24 @@ pub fn recycle_bin() -> RecycleBin {
         bytes: info.i64Size.max(0) as u64,
         items: info.i64NumItems.max(0) as u64,
     }
+}
+
+const DRIVE_FIXED: u32 = 3;
+
+/// Fixed drives whose Recycle Bin holds something. Emptying the bin gives space
+/// back on each of them, so each belongs in the free space the window reports.
+pub fn recycle_drives() -> Vec<std::path::PathBuf> {
+    // SAFETY: both calls only read system state. The path is nul terminated.
+    let mask = unsafe { GetLogicalDrives() };
+    (0..26u8)
+        .filter(|bit| mask & (1 << bit) != 0)
+        .map(|bit| std::path::PathBuf::from(format!("{}:\\", (b'A' + bit) as char)))
+        .filter(|root| {
+            let path = wide(root.as_os_str());
+            unsafe { GetDriveTypeW(path.as_ptr()) == DRIVE_FIXED }
+        })
+        .filter(|root| query_recycle_bin(Some(root)).items > 0)
+        .collect()
 }
 
 /// Empties the Recycle Bin on every drive without Windows' own prompts. The
@@ -199,6 +229,15 @@ mod tests {
         let names = channel_names();
         assert!(names.iter().any(|n| n == "Application"));
         assert!(names.iter().any(|n| n == "Security"));
+    }
+
+    #[test]
+    fn recycle_drives_are_fixed_drive_roots_whose_bin_has_items() {
+        for root in recycle_drives() {
+            let text = root.to_string_lossy().into_owned();
+            assert_eq!(text.len(), 3, "expected a drive root, got {text}");
+            assert!(query_recycle_bin(Some(&root)).items > 0);
+        }
     }
 
     #[test]

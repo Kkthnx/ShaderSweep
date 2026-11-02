@@ -12,7 +12,7 @@
 
 ### Added
 
-- **Every drive with a cache is shown, not just C:.** A Steam library on D: or a World of Warcraft install on E: puts its caches on that drive, so the header now lists free space for each drive that holds one, system drive first. After a real clean the result says how much each drive gained, for example `D: 3.54 GB more free, now 1.42 TB`. It appears once the rescan reads the drives, and only for a drive that really gained space.
+- **Every drive with a cache is shown, not just C:.** A Steam library on D: or a World of Warcraft install on E: puts its caches on that drive, so the header now lists free space for each drive that holds one, system drive first. After a real clean the result says how much each drive gained, for example `D: 3.54 GB more free, now 1.42 TB`. It appears once the rescan reads the drives, and only for a drive that really gained space. A drive whose Recycle Bin holds items is listed too, since emptying the bin gives space back there.
 - F5 and Ctrl+R scan again. Before, they reloaded the page and wiped the result on screen.
 
 ### Fixed

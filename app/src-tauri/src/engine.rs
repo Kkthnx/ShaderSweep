@@ -188,7 +188,7 @@ pub fn scan_with(
         .as_ref()
         .and_then(|l| state::check_queue(l, live.boot_secs, |p| Path::new(p).exists()));
 
-    let disks = drives_in_use(&ctx.system_drive, &folders)
+    let disks = drives_in_use(&ctx.system_drive, &folders, &system::recycle_drives())
         .into_iter()
         .filter_map(|root| {
             let space = native::disk_space(&root)?;
@@ -232,8 +232,12 @@ fn drive_root(path: &Path) -> Option<PathBuf> {
 /// cache can sit on a second drive, so the system drive alone would hide the
 /// space those return. The system drive comes first and the rest follow in
 /// letter order.
-fn drives_in_use(system_drive: &Path, folders: &[PathBuf]) -> Vec<PathBuf> {
-    let mut roots: Vec<PathBuf> = folders.iter().filter_map(|f| drive_root(f)).collect();
+fn drives_in_use(system_drive: &Path, folders: &[PathBuf], extra: &[PathBuf]) -> Vec<PathBuf> {
+    let mut roots: Vec<PathBuf> = folders
+        .iter()
+        .filter_map(|f| drive_root(f))
+        .chain(extra.iter().cloned())
+        .collect();
     roots.sort();
     roots.dedup();
     let system = drive_root(system_drive).unwrap_or_else(|| system_drive.to_path_buf());
@@ -1053,7 +1057,7 @@ mod tests {
             PathBuf::from(r"D:\SteamLibrary2\steamapps\shadercache"),
             PathBuf::from(r"C:\Users\Me\AppData\Local\NVIDIA\DXCache"),
         ];
-        let drives = drives_in_use(Path::new(r"C:\"), &folders);
+        let drives = drives_in_use(Path::new(r"C:\"), &folders, &[]);
         assert_eq!(
             drives,
             vec![
@@ -1069,10 +1073,25 @@ mod tests {
         let folders = vec![PathBuf::from(r"D:\SteamLibrary\steamapps\shadercache")];
         let system = Path::new(r"C:\");
         assert_eq!(
-            drives_in_use(system, &folders),
+            drives_in_use(system, &folders, &[]),
             vec![PathBuf::from(r"C:\"), PathBuf::from(r"D:\")]
         );
-        assert_eq!(drives_in_use(system, &[]), vec![PathBuf::from(r"C:\")]);
+        assert_eq!(drives_in_use(system, &[], &[]), vec![PathBuf::from(r"C:\")]);
+    }
+
+    #[test]
+    fn a_drive_with_only_recycle_bin_items_is_listed_once() {
+        let folders = vec![PathBuf::from(r"D:\SteamLibrary\steamapps\shadercache")];
+        let bins = vec![PathBuf::from(r"D:\"), PathBuf::from(r"E:\")];
+        let drives = drives_in_use(Path::new(r"C:\"), &folders, &bins);
+        assert_eq!(
+            drives,
+            vec![
+                PathBuf::from(r"C:\"),
+                PathBuf::from(r"D:\"),
+                PathBuf::from(r"E:\")
+            ]
+        );
     }
 
     /// Run by hand with `cargo test --release bench_scan -- --ignored --nocapture`.
