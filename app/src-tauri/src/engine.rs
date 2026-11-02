@@ -1094,12 +1094,15 @@ mod tests {
         );
     }
 
-    /// Run by hand with `cargo test --release bench_scan -- --ignored --nocapture`.
+    /// Run by hand with `SHADERSWEEP_BENCH=1 cargo test --release bench_scan -- --ignored --nocapture`.
     /// Scans this machine again and again. A leak shows as private memory
     /// that keeps climbing from one pass to the next.
     #[test]
     #[ignore]
     fn bench_scan() {
+        if !crate::testmem::bench_enabled() {
+            return;
+        }
         let passes: u32 = std::env::var("BENCH_PASSES")
             .ok()
             .and_then(|v| v.parse().ok())

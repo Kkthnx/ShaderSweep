@@ -24,3 +24,9 @@ pub fn read() -> Reading {
         handles,
     }
 }
+
+/// The benchmark tests are marked ignored, but CI runs ignored tests too. They
+/// only do their work when this is set, so CI does not spend minutes on them.
+pub fn bench_enabled() -> bool {
+    std::env::var_os("SHADERSWEEP_BENCH").is_some()
+}

@@ -594,11 +594,14 @@ mod tests {
         assert_eq!(out, Outcome::default());
     }
 
-    /// Run by hand with `cargo test --release bench_clear -- --ignored --nocapture`.
+    /// Run by hand with `SHADERSWEEP_BENCH=1 cargo test --release bench_clear -- --ignored --nocapture`.
     /// Set BENCH_FILES to change the size. Prints time and peak memory.
     #[test]
     #[ignore]
     fn bench_clear() {
+        if !crate::testmem::bench_enabled() {
+            return;
+        }
         let files: u64 = std::env::var("BENCH_FILES")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -636,12 +639,15 @@ mod tests {
         );
     }
 
-    /// Run by hand with `cargo test --release bench_repeat -- --ignored --nocapture`.
+    /// Run by hand with `SHADERSWEEP_BENCH=1 cargo test --release bench_repeat -- --ignored --nocapture`.
     /// Fills and clears a folder over and over. Private memory and handles
     /// should level off, and a leak shows as either one climbing.
     #[test]
     #[ignore]
     fn bench_repeat() {
+        if !crate::testmem::bench_enabled() {
+            return;
+        }
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().join("DXCache");
         for round in 1..=30 {

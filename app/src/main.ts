@@ -207,7 +207,9 @@ document.addEventListener("keydown", (event) => {
   const reload = event.key === "F5" || (event.ctrlKey && event.key.toLowerCase() === "r");
   if (!reload) return;
   event.preventDefault();
-  if (!event.repeat && !busy()) void runScan();
+  // Not while a dialog is asking something, and not on a held key.
+  const asking = el.dialog.open || el.sure.open;
+  if (!event.repeat && !busy() && !asking) void runScan();
 });
 
 if (!import.meta.env.DEV) {

@@ -1,7 +1,7 @@
 {
   "name": "shadersweep",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "MIT",
   "author": "Kkthnx",
   "type": "module",
