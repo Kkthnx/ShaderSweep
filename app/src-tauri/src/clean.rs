@@ -106,6 +106,25 @@ fn remove_file(path: &Path) -> std::io::Result<()> {
     }
 }
 
+/// What became of one file.
+#[derive(Debug, PartialEq, Eq)]
+enum Removal {
+    Removed,
+    /// Something else deleted it after the walk saw it. Temp and launcher
+    /// folders change under a running app. It is not freed by this run and it
+    /// is not stuck either, so it is counted as neither and never queued.
+    AlreadyGone,
+    Stuck,
+}
+
+fn try_remove(path: &Path) -> Removal {
+    match remove_file(path) {
+        Ok(()) => Removal::Removed,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Removal::AlreadyGone,
+        Err(_) => Removal::Stuck,
+    }
+}
+
 /// Most deleting threads at once. A delete spends nearly all its time waiting
 /// on the file system and on antivirus, so a handful of threads is faster than
 /// one. Measured through this very function on a 16 thread PC, clearing 10,000
@@ -175,10 +194,14 @@ pub fn clear_contents(
                     continue;
                 }
 
-                let removed = remove_file(&path).is_ok();
-                if !removed {
-                    locked(&stuck).push((path.clone(), len));
-                }
+                let removed = match try_remove(&path) {
+                    Removal::Removed => true,
+                    Removal::AlreadyGone => continue,
+                    Removal::Stuck => {
+                        locked(&stuck).push((path.clone(), len));
+                        false
+                    }
+                };
 
                 let mut now = locked(&running);
                 if removed {
@@ -472,6 +495,49 @@ mod tests {
         assert_eq!(out.removed_files, 600);
         assert_eq!(out.failed_files, 0);
         assert_eq!(last, (expected, 600), "the last tick shows the full total");
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn a_file_that_is_already_gone_is_not_a_failure() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(
+            try_remove(&dir.path().join("never-existed.bin")),
+            Removal::AlreadyGone
+        );
+        assert_eq!(
+            try_remove(&dir.path().join("no-such-folder").join("x.bin")),
+            Removal::AlreadyGone
+        );
+    }
+
+    #[test]
+    fn files_another_program_removes_mid_run_are_not_counted_as_failed() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("Temp");
+        let total = 400usize;
+        for n in 0..total {
+            file(&root.join(format!("f{n}.tmp")), 10);
+        }
+
+        // The first tick plays the part of an app emptying its own temp files
+        // while the walk is still handing them to the deleters.
+        let mut swept = false;
+        // The restart queue stays off so a regression here fails the test
+        // instead of writing real entries to the machine's pending list.
+        let out = run(&root, false, &AtomicBool::new(false), &mut |_| {
+            if !swept {
+                swept = true;
+                for entry in fs::read_dir(&root).unwrap().flatten() {
+                    let _ = fs::remove_file(entry.path());
+                }
+            }
+        });
+
+        assert_eq!(out.failed_files, 0, "a vanished file is not a failure");
+        assert_eq!(out.failed_bytes, 0);
+        assert_eq!(out.freed, u64::from(out.removed_files) * 10);
+        assert!(out.removed_files as usize <= total);
         assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
     }
 

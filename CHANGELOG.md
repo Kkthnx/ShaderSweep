@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **A file that another program deletes mid-clean is no longer reported as stuck.** Temp and launcher folders change while a clean runs, and a file that vanished between being found and being deleted used to count as a failure. With the restart queue on, its missing path was also queued for the next boot. Such a file is now counted as neither freed nor stuck. In a test that removes the files under the cleaner, 392 of 400 were reported as failed before and none are now.
+
 ## 2.3.0
 
 ### Changed
