@@ -93,11 +93,12 @@ function notices(): Notice[] {
       });
     }
     if (r.queuedFiles > 0 && state.restart === null) {
+      // One line with its button beside it. The explanation opens on a click,
+      // so the freed total stays near the top of the window.
       out.push({
         key: "restart-to-finish",
-        sticky: true,
         kind: "info",
-        title: "Restart to finish",
+        title: `Restart to finish, ${plural(r.queuedFiles, "file")} held`,
         body: `${plural(r.queuedFiles, "file")} (${formatBytes(r.queuedBytes)}) are held open by the display driver. Windows removes them on your next restart, and ShaderSweep will check afterwards that it did.`,
         action: { id: "restart", label: "Restart now" },
       });

@@ -798,7 +798,13 @@ button {
   display: block;
   height: 100%;
   background: var(--accent);
-  transition: width 0.2s ease-out;
+  transition:
+    width 0.2s ease-out,
+    opacity 0.4s;
+}
+
+.rowbar.is-done > span {
+  opacity: 0.18;
 }
 
 .live {

@@ -67,6 +67,9 @@ export async function runClean(): Promise<void> {
   state.startedAt = Date.now();
   state.now = state.startedAt;
   render();
+  // The running total and the file feed sit at the top. A list scrolled down
+  // would hide them for the whole run.
+  el.scroll.scrollTo({ top: 0 });
 
   try {
     state.result = await clean(ids, state.preview, state.queue);

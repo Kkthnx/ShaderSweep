@@ -23,7 +23,9 @@ function rowBar(p: ProviderScan): string {
   if (state.phase !== "cleaning" || !state.selected.has(p.id) || !p.found) return "";
   const prog = state.progress.get(p.id);
   const pct = prog ? (prog.done ? 100 : Math.min(99, Math.round((prog.freed / Math.max(p.bytes, 1)) * 100))) : 0;
-  return `<span class="rowbar" aria-hidden="true"><span style="width:${pct}%"></span></span>`;
+  // A finished row keeps its check mark and size, so its bar fades out
+  // instead of repeating the same fact in blue.
+  return `<span class="rowbar${prog?.done ? " is-done" : ""}" aria-hidden="true"><span style="width:${pct}%"></span></span>`;
 }
 
 function renderRow(p: ProviderScan): string {
