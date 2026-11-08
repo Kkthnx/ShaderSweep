@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 2.3.1
+
+### Changed
+
+- Starting a clean scrolls the list back to the top, so the running total, the progress bar and the file feed are on screen for the whole run even if the list was scrolled down.
+- After a clean, the restart notice folds to one line with its **Restart now** button beside it, and the explanation opens on a click. The freed total now starts about 100 px higher in the window.
+- During a clean, a row that has finished keeps its check mark and size, and its blue bar fades out instead of repeating the same fact.
 
 ### Fixed
 
