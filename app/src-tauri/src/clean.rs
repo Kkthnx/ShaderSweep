@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Mutex, MutexGuard, PoisonError};
 use std::thread;
+use std::time::Duration;
 
 use crate::fsutil::{has_dir_attribute, is_reparse, Eligible, Verdict};
 use crate::native;
@@ -118,11 +119,29 @@ enum Removal {
 }
 
 fn try_remove(path: &Path) -> Removal {
-    match remove_file(path) {
-        Ok(()) => Removal::Removed,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Removal::AlreadyGone,
-        Err(_) => Removal::Stuck,
+    let settle = |result: std::io::Result<()>| match result {
+        Ok(()) => Some(Removal::Removed),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Some(Removal::AlreadyGone),
+        Err(_) => None,
+    };
+    let first = remove_file(path);
+    let denied = matches!(&first, Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied);
+    if let Some(done) = settle(first) {
+        return done;
     }
+    if denied {
+        // Two deletes of one file at the same moment, ours and another
+        // program's, leave the loser with access denied while the winner's
+        // delete is still pending. Measured on this PC, about 3 in 1,440 runs
+        // of a test that does exactly that. A file held open by a driver
+        // reports a sharing violation instead, so only this error is looked
+        // at twice and a truly stuck file costs no more than a short wait.
+        thread::sleep(Duration::from_millis(2));
+        if let Some(done) = settle(remove_file(path)) {
+            return done;
+        }
+    }
+    Removal::Stuck
 }
 
 /// Most deleting threads at once. A delete spends nearly all its time waiting

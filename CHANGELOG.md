@@ -10,7 +10,7 @@
 
 ### Fixed
 
-- **A file that another program deletes mid-clean is no longer reported as stuck.** Temp and launcher folders change while a clean runs, and a file that vanished between being found and being deleted used to count as a failure. With the restart queue on, its missing path was also queued for the next boot. Such a file is now counted as neither freed nor stuck. In a test that removes the files under the cleaner, 392 of 400 were reported as failed before and none are now.
+- **A file that another program deletes mid-clean is no longer reported as stuck.** Temp and launcher folders change while a clean runs, and a file that vanished between being found and being deleted used to count as a failure. With the restart queue on, its missing path was also queued for the next boot. Such a file is now counted as neither freed nor stuck. When the cleaner and another program delete the same file at the same moment, Windows answers the loser with access denied for an instant, so that one case is looked at a second time before a file is called stuck. In a test that removes the files under the cleaner, 392 of 400 were reported as failed before and none are now, and 3,000 repeats of that test under load had no failures.
 
 ## 2.3.0
 
